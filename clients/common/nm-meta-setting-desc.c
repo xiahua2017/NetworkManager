@@ -5123,6 +5123,30 @@ static const NMMetaPropertyInfo *const property_infos_CONNECTION[] = {
 			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
 		),
 	),
+	PROPERTY_INFO_WITH_DESC (NM_SETTING_CONNECTION_MDNS,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.get_gtype =            nm_setting_connection_mdns_get_type,
+				.value_infos =          ENUM_VALUE_INFOS (
+					{
+						.value = NM_SETTING_CONNECTION_MDNS_YES,
+						.nick = "yes",
+					},
+					{
+						.value = NM_SETTING_CONNECTION_MDNS_NO,
+						.nick = "no",
+					},
+					{
+						.value = NM_SETTING_CONNECTION_MDNS_RESOLVE,
+						.nick = "resolve",
+					}
+				),
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PARSABLE_TEXT
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
+	),
 	NULL
 };
 
