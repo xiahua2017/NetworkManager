@@ -1363,6 +1363,24 @@ nm_dns_manager_set_hostname (NMDnsManager *self,
 }
 
 gboolean
+nm_dns_manager_set_mdns (NMDnsManager *self,
+                         int ifindex,
+                         NMSettingConnectionMdns mdns)
+{
+	NMDnsManagerPrivate *priv;
+	NMDnsPlugin *plugin;
+
+	g_return_val_if_fail (NM_IS_DNS_MANAGER (self), FALSE);
+	g_return_val_if_fail (ifindex >= 0, FALSE);
+	g_return_val_if_fail (mdns != NM_SETTING_CONNECTION_MDNS_UNKNOWN, FALSE);
+
+	priv = NM_DNS_MANAGER_GET_PRIVATE (self);
+	plugin = priv->plugin;
+
+	return nm_dns_plugin_update_mdns(plugin, ifindex, mdns);
+}
+
+gboolean
 nm_dns_manager_get_resolv_conf_explicit (NMDnsManager *self)
 {
 	NMDnsManagerPrivate *priv;
@@ -2019,4 +2037,3 @@ nm_dns_manager_class_init (NMDnsManagerClass *klass)
 	                                        NMDBUS_TYPE_DNS_MANAGER_SKELETON,
 	                                        NULL);
 }
-

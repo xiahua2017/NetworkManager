@@ -1067,12 +1067,16 @@ update_ip_dns (NMPolicy *self, int addr_family)
 	gpointer ip_config;
 	const char *ip_iface = NULL;
 	NMVpnConnection *vpn = NULL;
+	NMActiveConnection *best_ac = NULL;
 	NMDnsIPConfigType dns_type = NM_DNS_IP_CONFIG_TYPE_BEST_DEVICE;
 
 	nm_assert_addr_family (addr_family);
 
-	ip_config = get_best_ip_config (self, addr_family, &ip_iface, NULL, NULL, &vpn);
+	ip_config = get_best_ip_config (self, addr_family, &ip_iface, &best_ac, NULL, &vpn);
 	if (ip_config) {
+		NMConnection *connection = NULL;
+		NMSettingConnection *s_con = NULL;
+
 		if (vpn)
 			dns_type = NM_DNS_IP_CONFIG_TYPE_VPN;
 
@@ -1083,6 +1087,29 @@ update_ip_dns (NMPolicy *self, int addr_family)
 		                              ip_iface,
 		                              ip_config,
 		                              dns_type);
+
+		/* Find the corresponding connection for the mDNS settings. */
+		if (best_ac)
+			connection = nm_active_connection_get_applied_connection (best_ac);
+		if (connection)
+			s_con = nm_connection_get_setting_connection (connection);
+		if (s_con) {
+			NMSettingConnectionMdns mdns = nm_setting_connection_get_mdns (s_con);
+			int ifindex = -1;
+
+			if (mdns != NM_SETTING_CONNECTION_MDNS_UNKNOWN) {
+
+				if (addr_family == AF_INET)
+					ifindex = nm_ip4_config_get_ifindex (ip_config);
+				else if (addr_family == AF_INET6)
+					ifindex = nm_ip6_config_get_ifindex (ip_config);
+
+				mdns = nm_setting_connection_get_mdns (s_con);
+				nm_dns_manager_set_mdns (NM_POLICY_GET_PRIVATE (self)->dns_manager,
+				                         ifindex,
+				                         mdns);
+			}
+		}
 	}
 
 	if (addr_family == AF_INET6)

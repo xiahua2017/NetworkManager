@@ -26,6 +26,7 @@
 
 #include "nm-ip4-config.h"
 #include "nm-ip6-config.h"
+#include "nm-setting-connection.h"
 
 typedef enum {
 	NM_DNS_IP_CONFIG_TYPE_DEFAULT = 0,
@@ -82,6 +83,9 @@ void nm_dns_manager_set_initial_hostname (NMDnsManager *self,
 void nm_dns_manager_set_hostname         (NMDnsManager *self,
                                           const char *hostname,
                                           gboolean skip_update);
+gboolean nm_dns_manager_set_mdns         (NMDnsManager *self,
+                                          int ifindex,
+                                          NMSettingConnectionMdns mdns);
 
 /**
  * NMDnsManagerResolvConfManager
