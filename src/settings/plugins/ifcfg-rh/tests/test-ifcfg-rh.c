@@ -8669,7 +8669,7 @@ test_read_team_master (gconstpointer user_data)
 	NMConnection *connection;
 	NMSettingConnection *s_con;
 	NMSettingTeam *s_team;
-	const char *expected_config = "{ \"device\": \"team0\", \"link_watch\": { \"name\": \"ethtool\" } }";
+	const char *expected_config = "{\"device\": \"team0\", \"link_watch\": {\"name\": \"ethtool\"}}";
 
 	connection = _connection_from_file (PATH_NAME, NULL, TYPE_ETHERNET, NULL);
 
@@ -8722,7 +8722,7 @@ test_write_team_master (void)
 	NMSettingWired *s_wired;
 	NMSettingIPConfig *s_ip4;
 	NMSettingIPConfig *s_ip6;
-	const char *expected_config = "{ \"device\": \"team0\", \"link_watch\": { \"name\": \"ethtool\" } }";
+	const char *expected_config = "{\"device\": \"team0\", \"link_watch\": {\"name\": \"ethtool\"}}";
 	shvarFile *f;
 
 	connection = nm_simple_connection_new ();
@@ -8791,7 +8791,7 @@ test_read_team_port (gconstpointer user_data)
 	NMConnection *connection;
 	NMSettingConnection *s_con;
 	NMSettingTeamPort *s_team_port;
-	const char *expected_config = "{ \"p4p1\": { \"prio\": -10, \"sticky\": true } }";
+	const char *expected_config = "{\"p4p1\": {\"prio\": -10, \"sticky\": true}}";
 
 	connection = _connection_from_file (PATH_NAME, NULL, TYPE_ETHERNET, NULL);
 
@@ -8816,7 +8816,7 @@ test_write_team_port (void)
 	NMSettingConnection *s_con;
 	NMSettingTeamPort *s_team_port;
 	NMSettingWired *s_wired;
-	const char *expected_config = "{ \"p4p1\": { \"prio\": -10, \"sticky\": true } }";
+	const char *expected_config = "{\"p4p1\": {\"prio\": -10, \"sticky\": true}}";
 	shvarFile *f;
 
 	connection = nm_simple_connection_new ();
@@ -8871,7 +8871,7 @@ test_write_team_infiniband_port (void)
 	NMSettingConnection *s_con;
 	NMSettingTeamPort *s_team_port;
 	NMSettingInfiniband *s_inf;
-	const char *expected_config = "{ \"inf1\": { \"prio\": -10, \"sticky\": true } }";
+	const char *expected_config = "{\"inf1\": {\"prio\": -10, \"sticky\": true}}";
 	shvarFile *f;
 
 	connection = nm_simple_connection_new ();
@@ -9231,8 +9231,8 @@ test_svUnescape (void)
 		V1 ("\'some string\'", "some string"),
 		V0 ("Bob outside LAN", NULL),
 		V1 ("x", "x"),
-		V1 ("'{ \"device\": \"team0\", \"link_watch\": { \"name\": \"ethtool\" } }'",
-	       "{ \"device\": \"team0\", \"link_watch\": { \"name\": \"ethtool\" } }"),
+		V1 ("'{\"device\": \"team0\", \"link_watch\": {\"name\": \"ethtool\"}}'",
+	       "{\"device\": \"team0\", \"link_watch\": {\"name\": \"ethtool\"}}"),
 		V1 ("x\"\"b", "xb"),
 		V1 ("x\"c\"b", "xcb"),
 		V1 ("\"c\"b", "cb"),
