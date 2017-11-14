@@ -2036,7 +2036,7 @@ nm_setting_connection_class_init (NMSettingConnectionClass *setting_class)
 	g_object_class_install_property
 		(object_class, PROP_MDNS,
 		 g_param_spec_int (NM_SETTING_CONNECTION_MDNS, "", "",
-		                   G_MININT, G_MAXINT,
+		                   G_MININT32, G_MAXINT32,
 		                   NM_SETTING_CONNECTION_MDNS_UNKNOWN,
 		                   G_PARAM_READWRITE |
 		                   G_PARAM_CONSTRUCT |
