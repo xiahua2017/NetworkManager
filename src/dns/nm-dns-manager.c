@@ -1377,7 +1377,7 @@ nm_dns_manager_set_mdns (NMDnsManager *self,
 	priv = NM_DNS_MANAGER_GET_PRIVATE (self);
 	plugin = priv->plugin;
 
-	return nm_dns_plugin_update_mdns(plugin, ifindex, mdns);
+	return nm_dns_plugin_update_mdns (plugin, ifindex, mdns);
 }
 
 gboolean
