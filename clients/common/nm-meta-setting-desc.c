@@ -5129,8 +5129,6 @@ static const NMMetaPropertyInfo *const property_infos_CONNECTION[] = {
 			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
 				.get_gtype =            nm_setting_connection_mdns_get_type,
 			),
-			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PARSABLE_TEXT
-			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
 		),
 	),
 	NULL
