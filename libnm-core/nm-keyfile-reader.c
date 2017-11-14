@@ -1313,28 +1313,6 @@ team_config_parser (KeyfileReaderInfo *info, NMSetting *setting, const char *key
 	g_object_set (G_OBJECT (setting), key, conf, NULL);
 }
 
-static void
-mdns_parser (KeyfileReaderInfo *info, NMSetting *setting, const char *key)
-{
-	NMSettingConnectionMdns mdns;
-	const char *setting_name = nm_setting_get_name (setting);
-	gs_free char *s = NULL;
-
-	s = nm_keyfile_plugin_kf_get_string (info->keyfile, setting_name, key, NULL);
-	if (s) {
-		if (!nm_utils_enum_from_str (nm_setting_connection_mdns_get_type (), s,
-		                             (int *) &mdns, NULL)) {
-			handle_warn (info, key, NM_KEYFILE_WARN_SEVERITY_WARN,
-			             _("invalid option '%s', use one of [%s]"),
-			             s, "yes,no,resolve");
-			return;
-		}
-	} else
-		mdns = NM_SETTING_CONNECTION_MDNS_UNKNOWN;
-
-	g_object_set (G_OBJECT (setting), key, (gint) mdns, NULL);
-}
-
 typedef struct {
 	const char *setting_name;
 	const char *key;
@@ -1461,10 +1439,6 @@ static KeyParser key_parsers[] = {
 	  NM_SETTING_TEAM_CONFIG,
 	  TRUE,
 	  team_config_parser },
-	{ NM_SETTING_CONNECTION_SETTING_NAME,
-	  NM_SETTING_CONNECTION_MDNS,
-	  TRUE,
-	  mdns_parser },
 	{ NULL, NULL, FALSE }
 };
 

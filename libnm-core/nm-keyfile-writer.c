@@ -501,24 +501,6 @@ cert_writer (KeyfileWriterInfo *info,
 	cert_writer_default (info->connection, info->keyfile, &type_data);
 }
 
-static void
-mdns_writer (KeyfileWriterInfo *info,
-             NMSetting *setting,
-             const char *key,
-             const GValue *value)
-{
-	NMSettingConnectionMdns mdns;
-	gs_free char *str = NULL;
-
-	mdns = (NMSettingConnectionMdns) g_value_get_int (value);
-	str = nm_utils_enum_to_str (nm_setting_connection_mdns_get_type (),
-	                            mdns);
-	nm_keyfile_plugin_kf_set_string (info->keyfile,
-	                                 nm_setting_get_name (setting),
-	                                 key,
-	                                 str);
-}
-
 /*****************************************************************************/
 
 typedef struct {
@@ -533,7 +515,7 @@ typedef struct {
 /* A table of keys that require further parsing/conversion because they are
  * stored in a format that can't be automatically read using the key's type.
  * i.e. IPv4 addresses, which are stored in NetworkManager as guint32, but are
- * stored in keyfiles as strings, eg "10.1.1.2" or IPv6 addresses stored
+ * stored in keyfiles as strings, eg "10.1.1.2" or IPv6 addresses stored 
  * in struct in6_addr internally, but as string in keyfiles.
  */
 static KeyWriter key_writers[] = {
@@ -594,9 +576,6 @@ static KeyWriter key_writers[] = {
 	{ NM_SETTING_802_1X_SETTING_NAME,
 	  NM_SETTING_802_1X_PHASE2_PRIVATE_KEY,
 	  cert_writer },
-	{ NM_SETTING_CONNECTION_SETTING_NAME,
-	  NM_SETTING_CONNECTION_MDNS,
-	  mdns_writer },
 	{ NULL, NULL, NULL }
 };
 
@@ -756,3 +735,4 @@ nm_keyfile_write (NMConnection *connection,
 	}
 	return info.keyfile;
 }
+
