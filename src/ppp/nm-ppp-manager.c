@@ -93,6 +93,7 @@ typedef struct {
 	GPid pid;
 
 	char *parent_iface;
+	int ifindex;
 
 	NMActRequest *act_req;
 	GDBusMethodInvocation *pending_secrets_context;
@@ -417,6 +418,14 @@ set_ip_config_common (NMPPPManager *self,
 	if (priv->ip_iface == NULL)
 		priv->ip_iface = g_strdup (iface);
 
+	if (priv->ifindex <= 0) {
+		priv->ifindex = nm_platform_link_get_ifindex (NM_PLATFORM_GET, priv->ip_iface);
+		if (priv->ifindex <= 0) {
+			_LOGE ("unknown interface %s", priv->ip_iface);
+			return FALSE;
+		}
+	}
+
 	/* Got successful IP config; obviously the secrets worked */
 	applied_connection = nm_act_request_get_applied_connection (priv->act_req);
 	g_object_set_qdata (G_OBJECT (applied_connection), ppp_manager_secret_tries_quark (), NULL);
@@ -441,7 +450,6 @@ impl_ppp_manager_set_ip4_config (NMPPPManager *manager,
 	NMPlatformIP4Address address;
 	guint32 u32, mtu;
 	GVariantIter *iter;
-	int ifindex;
 
 	_LOGI ("(IPv4 Config Get) reply received.");
 
@@ -450,11 +458,7 @@ impl_ppp_manager_set_ip4_config (NMPPPManager *manager,
 	if (!set_ip_config_common (manager, config_dict, NM_PPP_IP4_CONFIG_INTERFACE, &mtu))
 		goto out;
 
-	ifindex = nm_platform_link_get_ifindex (NM_PLATFORM_GET, priv->ip_iface);
-	if (ifindex <= 0)
-		goto out;
-
-	config = nm_ip4_config_new (nm_platform_get_multi_idx (NM_PLATFORM_GET), ifindex);
+	config = nm_ip4_config_new (nm_platform_get_multi_idx (NM_PLATFORM_GET), priv->ifindex);
 
 	if (mtu)
 		nm_ip4_config_set_mtu (config, mtu, NM_IP_CONFIG_SOURCE_PPP);
@@ -467,7 +471,7 @@ impl_ppp_manager_set_ip4_config (NMPPPManager *manager,
 
 	if (g_variant_lookup (config_dict, NM_PPP_IP4_CONFIG_GATEWAY, "u", &u32)) {
 		const NMPlatformIP4Route r = {
-			.ifindex   = ifindex,
+			.ifindex   = priv->ifindex,
 			.rt_source = NM_IP_CONFIG_SOURCE_PPP,
 			.gateway   = u32,
 			.table_coerced = nm_platform_route_table_coerce (priv->ip4_route_table),
@@ -549,7 +553,6 @@ impl_ppp_manager_set_ip6_config (NMPPPManager *manager,
 	struct in6_addr a;
 	NMUtilsIPv6IfaceId iid = NM_UTILS_IPV6_IFACE_ID_INIT;
 	gboolean has_peer = FALSE;
-	int ifindex;
 
 	_LOGI ("(IPv6 Config Get) reply received.");
 
@@ -558,18 +561,14 @@ impl_ppp_manager_set_ip6_config (NMPPPManager *manager,
 	if (!set_ip_config_common (manager, config_dict, NM_PPP_IP6_CONFIG_INTERFACE, NULL))
 		goto out;
 
-	ifindex = nm_platform_link_get_ifindex (NM_PLATFORM_GET, priv->ip_iface);
-	if (ifindex <= 0)
-		goto out;
-
-	config = nm_ip6_config_new (nm_platform_get_multi_idx (NM_PLATFORM_GET), ifindex);
+	config = nm_ip6_config_new (nm_platform_get_multi_idx (NM_PLATFORM_GET), priv->ifindex);
 
 	memset (&addr, 0, sizeof (addr));
 	addr.plen = 64;
 
 	if (iid_value_to_ll6_addr (config_dict, NM_PPP_IP6_CONFIG_PEER_IID, &a, NULL)) {
 		const NMPlatformIP6Route r = {
-			.ifindex   = ifindex,
+			.ifindex   = priv->ifindex,
 			.rt_source = NM_IP_CONFIG_SOURCE_PPP,
 			.gateway   = a,
 			.table_coerced = nm_platform_route_table_coerce (priv->ip6_route_table),
