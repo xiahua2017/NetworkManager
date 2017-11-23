@@ -1717,7 +1717,7 @@ make_ip6_setting (shvarFile *ifcfg,
 		value = svGetValueStr_cp (ifcfg, "DEVICE");
 		ipv6_defaultgw = svGetValueStr_cp (network_ifcfg, "IPV6_DEFAULTGW");
 		ipv6_defaultdev = svGetValueStr_cp (network_ifcfg, "IPV6_DEFAULTDEV");
-		dns_options = svGetValue (network_ifcfg, "RES_OPTIONS", &dns_options_free);
+		dns_options = svGetValue (network_ifcfg, "IPV6_RES_OPTIONS", &dns_options_free);
 
 		if (ipv6_defaultgw) {
 			default_dev = strchr (ipv6_defaultgw, '%');
@@ -1948,7 +1948,7 @@ make_ip6_setting (shvarFile *ifcfg,
 	}
 
 	/* DNS options */
-	parse_dns_options (s_ip6, svGetValue (ifcfg, "RES_OPTIONS", &value));
+	parse_dns_options (s_ip6, svGetValue (ifcfg, "IPV6_RES_OPTIONS", &value));
 	parse_dns_options (s_ip6, dns_options);
 	g_free (value);
 

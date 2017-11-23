@@ -2112,6 +2112,45 @@ write_user_setting (NMConnection *connection, shvarFile *ifcfg, GError **error)
 	return TRUE;
 }
 
+static void
+write_res_options (shvarFile *ifcfg, NMSettingIPConfig *s_ip, const char *var)
+{
+	gs_unref_ptrarray GPtrArray *array = NULL;
+	guint i, num_options;
+	GString *value;
+	const char *option;
+
+	if (!s_ip)
+		return;
+
+	if (NM_IN_STRSET (nm_setting_ip_config_get_method (s_ip),
+	                  NM_SETTING_IP4_CONFIG_METHOD_DISABLED,
+	                  NM_SETTING_IP6_CONFIG_METHOD_IGNORE))
+		return;
+
+	array = g_ptr_array_new ();
+
+	num_options = nm_setting_ip_config_get_num_dns_options (s_ip);
+	for (i = 0; i < num_options; i++) {
+		option = nm_setting_ip_config_get_dns_option (s_ip, i);
+		if (_nm_utils_dns_option_find_idx (array, option) < 0)
+			g_ptr_array_add (array, (gpointer) option);
+	}
+
+	if (   array->len > 0
+	    || nm_setting_ip_config_has_dns_options (s_ip)) {
+		value = g_string_new (NULL);
+		for (i = 0; i < array->len; i++) {
+			if (i > 0)
+				g_string_append_c (value, ' ');
+			g_string_append (value, array->pdata[i]);
+		}
+		svSetValue (ifcfg, var, value->str);
+		g_string_free (value, TRUE);
+	} else
+		svUnsetValue (ifcfg, var);
+}
+
 static gboolean
 write_ip4_setting (NMConnection *connection,
                    shvarFile *ifcfg,
@@ -2143,6 +2182,7 @@ write_ip4_setting (NMConnection *connection,
 		 * Some IPv4 setting related options are not cleared,
 		 * for no strong reason. */
 		svUnsetValue (ifcfg, "BOOTPROTO");
+		svUnsetValue (ifcfg, "RES_OPTIONS");
 		svUnsetAll (ifcfg, SV_KEY_TYPE_IP4_ADDRESS);
 		return TRUE;
 	}
@@ -2339,6 +2379,8 @@ write_ip4_setting (NMConnection *connection,
 	else
 		svUnsetValue (ifcfg, "IPV4_DNS_PRIORITY");
 
+	write_res_options (ifcfg, s_ip4, "RES_OPTIONS");
+
 	return TRUE;
 }
 
@@ -2480,6 +2522,7 @@ write_ip6_setting (NMConnection *connection,
 		svUnsetValue (ifcfg, "IPV6_FAILURE_FATAL");
 		svUnsetValue (ifcfg, "IPV6_ROUTE_METRIC");
 		svUnsetValue (ifcfg, "IPV6_ADDR_GEN_MODE");
+		svUnsetValue (ifcfg, "IPV6_RES_OPTIONS");
 		return TRUE;
 	}
 
@@ -2635,66 +2678,9 @@ write_ip6_setting (NMConnection *connection,
 	else
 		svUnsetValue (ifcfg, "IPV6_DNS_PRIORITY");
 
+	write_res_options (ifcfg, s_ip6, "IPV6_RES_OPTIONS");
+
 	NM_SET_OUT (out_route6_content, write_route_file (s_ip6));
-
-	return TRUE;
-}
-
-static void
-add_dns_option (GPtrArray *array, const char *option)
-{
-	if (_nm_utils_dns_option_find_idx (array, option) < 0)
-		g_ptr_array_add (array, (gpointer) option);
-}
-
-static gboolean
-write_res_options (NMConnection *connection, shvarFile *ifcfg, GError **error)
-{
-	NMSettingIPConfig *s_ip6;
-	NMSettingIPConfig *s_ip4;
-	const char *method;
-	int i, num_options;
-	gs_unref_ptrarray GPtrArray *array = NULL;
-	GString *value;
-
-	s_ip4 = nm_connection_get_setting_ip4_config (connection);
-
-	if (!s_ip4) {
-		/* slave-type: clear res-options */
-		svUnsetValue (ifcfg, "RES_OPTIONS");
-		return TRUE;
-	}
-
-	array = g_ptr_array_new ();
-
-	method = nm_setting_ip_config_get_method (s_ip4);
-	if (g_strcmp0 (method, NM_SETTING_IP4_CONFIG_METHOD_DISABLED)) {
-		num_options = nm_setting_ip_config_get_num_dns_options (s_ip4);
-		for (i = 0; i < num_options; i++)
-			add_dns_option (array, nm_setting_ip_config_get_dns_option (s_ip4, i));
-	}
-
-	s_ip6 = nm_connection_get_setting_ip6_config (connection);
-	method = nm_setting_ip_config_get_method (s_ip6);
-	if (g_strcmp0 (method, NM_SETTING_IP6_CONFIG_METHOD_IGNORE)) {
-		num_options = nm_setting_ip_config_get_num_dns_options (s_ip6);
-		for (i = 0; i < num_options; i++)
-			add_dns_option (array, nm_setting_ip_config_get_dns_option (s_ip6, i));
-	}
-
-	if (   array->len > 0
-	    || nm_setting_ip_config_has_dns_options (s_ip4)
-	    || nm_setting_ip_config_has_dns_options (s_ip6)) {
-		value = g_string_new (NULL);
-		for (i = 0; i < array->len; i++) {
-			if (i > 0)
-				g_string_append_c (value, ' ');
-			g_string_append (value, array->pdata[i]);
-		}
-		svSetValue (ifcfg, "RES_OPTIONS", value->str);
-		g_string_free (value, TRUE);
-	} else
-		svUnsetValue (ifcfg, "RES_OPTIONS");
 
 	return TRUE;
 }
@@ -2925,9 +2911,6 @@ do_write_construct (NMConnection *connection,
 	                        ifcfg,
 	                        !route_ignore ? &route6_content : NULL,
 	                        error))
-		return FALSE;
-
-	if (!write_res_options (connection, ifcfg, error))
 		return FALSE;
 
 	write_connection_setting (s_con, ifcfg);
