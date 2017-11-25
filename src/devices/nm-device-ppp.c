@@ -88,9 +88,6 @@ ppp_state_changed (NMPPPManager *ppp_manager, NMPPPStatus status, gpointer user_
 	case NM_PPP_STATUS_DEAD:
 		nm_device_state_changed (device, NM_DEVICE_STATE_FAILED, NM_DEVICE_STATE_REASON_PPP_FAILED);
 		break;
-	case NM_PPP_STATUS_RUNNING:
-		nm_device_activate_schedule_stage3_ip_config_start (device);
-		break;
 	default:
 		break;
 	}
@@ -111,23 +108,36 @@ ppp_ip4_config (NMPPPManager *ppp_manager,
 
 	if (nm_device_get_state (device) == NM_DEVICE_STATE_IP_CONFIG) {
 		if (nm_device_activate_ip4_state_in_conf (device)) {
-			if (!nm_device_take_over_link (device, iface, &renamed)) {
-				nm_device_state_changed (device, NM_DEVICE_STATE_FAILED,
-				                         NM_DEVICE_STATE_REASON_IP_CONFIG_UNAVAILABLE);
-				return;
-			}
-			if (renamed)
-				nm_manager_remove_device (nm_manager_get (), iface, NM_DEVICE_TYPE_PPP);
-
 			nm_device_activate_schedule_ip4_config_result (device, config);
+		}
+		return;
+	}
+
+	/* We are not yet in the IP configuration stage: cache the
+	 * configuration for later.
+	 */
+	if (priv->ip4_config)
+		g_object_unref (priv->ip4_config);
+	priv->ip4_config = g_object_ref (config);
+
+	if (priv->iface)
+		g_assert_cmpstr (priv->iface, ==, iface);
+	else {
+		/* Complete device initialization when we receive the first
+		 * IP{4,6} configuration and we know the name of the interface
+		 * created by pppd.
+		 */
+		priv->iface = g_strdup (iface);
+		if (!nm_device_take_over_link (device, iface, &renamed)) {
+			nm_device_state_changed (device, NM_DEVICE_STATE_FAILED,
+			                         NM_DEVICE_STATE_REASON_IP_CONFIG_UNAVAILABLE);
 			return;
 		}
-	} else {
-		if (priv->ip4_config)
-			g_object_unref (priv->ip4_config);
-		priv->ip4_config = g_object_ref (config);
-		g_free (priv->iface);
-		priv->iface = g_strdup (iface);
+		if (renamed)
+			nm_manager_remove_device (nm_manager_get (), iface, NM_DEVICE_TYPE_PPP);
+
+		/* Once the device gets an ifindex, start with IP configuration */
+		nm_device_activate_schedule_stage3_ip_config_start (device);
 	}
 }
 
@@ -189,13 +199,10 @@ act_stage3_ip4_config_start (NMDevice *device,
 {
 	NMDevicePpp *self = NM_DEVICE_PPP (device);
 	NMDevicePppPrivate *priv = NM_DEVICE_PPP_GET_PRIVATE (self);
-	gboolean renamed;
+
+	_LOGT (LOGD_DEVICE | LOGD_PPP, "ip4 config start");
 
 	if (priv->ip4_config) {
-		if  (!nm_device_take_over_link (device, priv->iface, &renamed))
-			return NM_ACT_STAGE_RETURN_FAILURE;
-		if (renamed)
-			nm_manager_remove_device (nm_manager_get (), priv->iface, NM_DEVICE_TYPE_PPP);
 		if (out_config)
 			*out_config = g_steal_pointer (&priv->ip4_config);
 		else
