@@ -21,6 +21,7 @@
 #include "nm-device-private.h"
 #include "nm-manager.h"
 #include "nm-setting-pppoe.h"
+#include "nm-setting-ip4-config.h"
 #include "platform/nm-platform.h"
 #include "ppp/nm-ppp-manager.h"
 #include "ppp/nm-ppp-manager-call.h"
@@ -199,8 +200,19 @@ act_stage3_ip4_config_start (NMDevice *device,
 {
 	NMDevicePpp *self = NM_DEVICE_PPP (device);
 	NMDevicePppPrivate *priv = NM_DEVICE_PPP_GET_PRIVATE (self);
+	NMSettingIPConfig *s_ip4;
+	NMDeviceClass *dev_class;
 
 	_LOGT (LOGD_DEVICE | LOGD_PPP, "ip4 config start");
+
+	s_ip4 = (NMSettingIPConfig *) nm_device_get_applied_setting (device, NM_TYPE_SETTING_IP4_CONFIG);
+	if (!nm_streq0 (nm_setting_ip_config_get_method (s_ip4),
+	                NM_SETTING_IP4_CONFIG_METHOD_AUTO)) {
+		dev_class = NM_DEVICE_CLASS (nm_device_ppp_parent_class);
+		return dev_class->act_stage3_ip4_config_start (device,
+		                                               out_config,
+		                                               out_failure_reason);
+	}
 
 	if (priv->ip4_config) {
 		if (out_config)
