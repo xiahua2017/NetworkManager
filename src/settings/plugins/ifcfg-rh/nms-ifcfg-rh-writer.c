@@ -2115,40 +2115,23 @@ write_user_setting (NMConnection *connection, shvarFile *ifcfg, GError **error)
 static void
 write_res_options (shvarFile *ifcfg, NMSettingIPConfig *s_ip, const char *var)
 {
-	gs_unref_ptrarray GPtrArray *array = NULL;
+	nm_auto_free_gstring GString *value = NULL;
 	guint i, num_options;
-	GString *value;
-	const char *option;
 
-	if (!s_ip)
+	if (!nm_setting_ip_config_has_dns_options (s_ip)) {
+		svUnsetValue (ifcfg, var);
 		return;
-
-	if (NM_IN_STRSET (nm_setting_ip_config_get_method (s_ip),
-	                  NM_SETTING_IP4_CONFIG_METHOD_DISABLED,
-	                  NM_SETTING_IP6_CONFIG_METHOD_IGNORE))
-		return;
-
-	array = g_ptr_array_new ();
-
-	num_options = nm_setting_ip_config_get_num_dns_options (s_ip);
-	for (i = 0; i < num_options; i++) {
-		option = nm_setting_ip_config_get_dns_option (s_ip, i);
-		if (_nm_utils_dns_option_find_idx (array, option) < 0)
-			g_ptr_array_add (array, (gpointer) option);
 	}
 
-	if (   array->len > 0
-	    || nm_setting_ip_config_has_dns_options (s_ip)) {
-		value = g_string_new (NULL);
-		for (i = 0; i < array->len; i++) {
-			if (i > 0)
-				g_string_append_c (value, ' ');
-			g_string_append (value, array->pdata[i]);
-		}
-		svSetValue (ifcfg, var, value->str);
-		g_string_free (value, TRUE);
-	} else
-		svUnsetValue (ifcfg, var);
+	value = g_string_new (NULL);
+	num_options = nm_setting_ip_config_get_num_dns_options (s_ip);
+	for (i = 0; i < num_options; i++) {
+		if (i > 0)
+			g_string_append_c (value, ' ');
+		g_string_append (value, nm_setting_ip_config_get_dns_option (s_ip, i));
+	}
+
+	svSetValue (ifcfg, var, value->str);
 }
 
 static gboolean
