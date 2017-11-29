@@ -1856,7 +1856,8 @@ make_ip6_setting (shvarFile *ifcfg,
 		value = svGetValueStr_cp (ifcfg, "IPV6_DEFAULTGW");
 		if (!value) {
 			/* If no gateway in the ifcfg, try global /etc/sysconfig/network instead */
-			value = svGetValueStr_cp (network_ifcfg, "IPV6_DEFAULTGW");
+			if (network_ifcfg)
+				value = svGetValueStr_cp (network_ifcfg, "IPV6_DEFAULTGW");
 		}
 		if (value) {
 			char *ptr;
