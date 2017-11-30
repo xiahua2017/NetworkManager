@@ -354,10 +354,28 @@ nm_ip_config_get_addr_family (const NMIPConfig *config)
 		} \
 	} G_STMT_END
 
+#define _NM_IP_CONFIG_DISPATCH_VOID(config, v4_func, v6_func, ...) \
+	G_STMT_START { \
+		gconstpointer _config = (config); \
+		\
+		if (NM_IS_IP4_CONFIG (_config)) { \
+			v4_func ((NMIP4Config *) _config, ##__VA_ARGS__); \
+		} else { \
+			nm_assert (NM_IS_IP6_CONFIG (_config)); \
+			v6_func ((NMIP6Config *) _config, ##__VA_ARGS__); \
+		} \
+	} G_STMT_END
+
 static inline int
 nm_ip_config_get_dns_priority (const NMIPConfig *self)
 {
 	_NM_IP_CONFIG_DISPATCH (self, nm_ip4_config_get_dns_priority, nm_ip6_config_get_dns_priority);
+}
+
+static inline void
+nm_ip_config_reset_nameservers (const NMIPConfig *self)
+{
+	_NM_IP_CONFIG_DISPATCH_VOID (self, nm_ip4_config_reset_nameservers, nm_ip6_config_reset_nameservers);
 }
 
 static inline guint
@@ -382,6 +400,18 @@ static inline const char *
 nm_ip_config_get_domain (const NMIPConfig *self, guint i)
 {
 	_NM_IP_CONFIG_DISPATCH (self, nm_ip4_config_get_domain, nm_ip6_config_get_domain, i);
+}
+
+static inline void
+nm_ip_config_reset_searches (const NMIPConfig *self)
+{
+	_NM_IP_CONFIG_DISPATCH_VOID (self, nm_ip4_config_reset_searches, nm_ip6_config_reset_searches);
+}
+
+static inline void
+nm_ip_config_add_search (const NMIPConfig *self, const char *new)
+{
+	_NM_IP_CONFIG_DISPATCH_VOID (self, nm_ip4_config_add_search, nm_ip6_config_add_search, new);
 }
 
 static inline guint
