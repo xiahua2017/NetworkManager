@@ -752,23 +752,15 @@ applied_config_add_address (AppliedConfig *config, const NMPlatformIPAddress *ad
 }
 
 static void
-applied_config_add_nameserver (AppliedConfig *config, gconstpointer ns)
+applied_config_add_nameserver (AppliedConfig *config, const NMIPAddr *ns)
 {
-	if (config->orig) {
-		if (NM_IS_IP4_CONFIG (config->orig))
-			nm_ip4_config_add_nameserver ((NMIP4Config *) config->orig, GPOINTER_TO_UINT (ns));
-		else
-			nm_ip6_config_add_nameserver ((NMIP6Config *) config->orig, ns);
-
-	} else
+	if (config->orig)
+		nm_ip_config_add_nameserver (config->orig, ns);
+	else
 		nm_assert (!config->current);
 
-	if (config->current) {
-		if (NM_IS_IP4_CONFIG (config->current))
-			nm_ip4_config_add_nameserver ((NMIP4Config *) config->current, GPOINTER_TO_UINT (ns));
-		else
-			nm_ip6_config_add_nameserver ((NMIP6Config *) config->current, ns);
-	}
+	if (config->current)
+		nm_ip_config_add_nameserver (config->current, ns);
 }
 
 static void
@@ -7146,7 +7138,7 @@ nm_device_copy_ip6_dns_config (NMDevice *self, NMDevice *from_device)
 	len = nm_ip6_config_get_num_nameservers (from_config);
 	for (i = 0; i < len; i++) {
 		applied_config_add_nameserver (&priv->ac_ip6_config,
-		                               nm_ip6_config_get_nameserver (from_config, i));
+		                               (const NMIPAddr *) nm_ip6_config_get_nameserver (from_config, i));
 	}
 
 	len = nm_ip6_config_get_num_searches (from_config);
@@ -7658,7 +7650,7 @@ ndisc_config_changed (NMNDisc *ndisc, const NMNDiscData *rdata, guint changed_in
 		applied_config_reset_nameservers (&priv->ac_ip6_config);
 
 		for (i = 0; i < rdata->dns_servers_n; i++)
-			applied_config_add_nameserver (&priv->ac_ip6_config, &rdata->dns_servers[i].address);
+			applied_config_add_nameserver (&priv->ac_ip6_config, (const NMIPAddr *) &rdata->dns_servers[i].address);
 	}
 
 	if (changed & NM_NDISC_CONFIG_DNS_DOMAINS) {

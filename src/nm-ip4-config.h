@@ -222,6 +222,13 @@ const NMPlatformIP4Route *nm_ip4_config_get_direct_route_for_host (const NMIP4Co
 
 void nm_ip4_config_reset_nameservers (NMIP4Config *self);
 void nm_ip4_config_add_nameserver (NMIP4Config *self, guint32 nameserver);
+
+static inline void
+_nm_ip4_config_add_nameserver (NMIP4Config *self, const guint32 *nameserver)
+{
+	nm_ip4_config_add_nameserver (self, *nameserver);
+}
+
 void nm_ip4_config_del_nameserver (NMIP4Config *self, guint i);
 guint nm_ip4_config_get_num_nameservers (const NMIP4Config *self);
 guint32 nm_ip4_config_get_nameserver (const NMIP4Config *self, guint i);
@@ -376,6 +383,12 @@ static inline int
 nm_ip_config_get_dns_priority (const NMIPConfig *self)
 {
 	_NM_IP_CONFIG_DISPATCH (self, nm_ip4_config_get_dns_priority, nm_ip6_config_get_dns_priority);
+}
+
+static inline void
+nm_ip_config_add_nameserver (NMIPConfig *self, const NMIPAddr *ns)
+{
+	_NM_IP_CONFIG_DISPATCH_VOID (self, _nm_ip4_config_add_nameserver, nm_ip6_config_add_nameserver, (gconstpointer) ns);
 }
 
 static inline void
