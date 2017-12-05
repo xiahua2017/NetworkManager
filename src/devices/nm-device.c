@@ -11094,9 +11094,9 @@ intersect_ext_config (NMDevice *self, AppliedConfig *config)
 	      ? (NMIPConfig *) priv->ext_ip4_config
 	      : (NMIPConfig *) priv->ext_ip6_config;
 
-	if (config->current) {
+	if (config->current)
 		nm_ip_config_intersect (config->current, ext, penalty);
-	} else {
+	else {
 		config->current = nm_ip_config_intersect_alloc (config->orig,
 		                                                ext,
 		                                                penalty);
