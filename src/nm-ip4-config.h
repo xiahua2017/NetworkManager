@@ -366,6 +366,12 @@ nm_ip_config_get_addr_family (const NMIPConfig *config)
 		} \
 	} G_STMT_END
 
+static inline void
+nm_ip_config_add_address (NMIPConfig *self, const NMPlatformIPAddress *address)
+{
+	_NM_IP_CONFIG_DISPATCH_VOID (self, nm_ip4_config_add_address, nm_ip6_config_add_address, (gconstpointer) address);
+}
+
 static inline int
 nm_ip_config_get_dns_priority (const NMIPConfig *self)
 {

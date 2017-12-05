@@ -740,22 +740,15 @@ applied_config_get_current (AppliedConfig *config)
 }
 
 static void
-applied_config_add_address (AppliedConfig *config, gconstpointer address)
+applied_config_add_address (AppliedConfig *config, const NMPlatformIPAddress *address)
 {
-	if (config->orig) {
-		if (NM_IS_IP4_CONFIG (config->orig))
-			nm_ip4_config_add_address ((NMIP4Config *) config->orig, address);
-		else
-			nm_ip6_config_add_address ((NMIP6Config *) config->orig, address);
-	} else
+	if (config->orig)
+		nm_ip_config_add_address (config->orig, address);
+	else
 		nm_assert (!config->current);
 
-	if (config->current) {
-		if (NM_IS_IP4_CONFIG (config->current))
-			nm_ip4_config_add_address ((NMIP4Config *) config->current, address);
-		else
-			nm_ip6_config_add_address ((NMIP6Config *) config->current, address);
-	}
+	if (config->current)
+		nm_ip_config_add_address (config->current, address);
 }
 
 static void
@@ -6893,7 +6886,7 @@ dhcp6_state_changed (NMDhcpClient *client,
 			const NMPlatformIP6Address *a;
 
 			nm_ip_config_iter_ip6_address_for_each (&ipconf_iter, ip6_config, &a)
-				applied_config_add_address (&priv->dhcp6.ip6_config, a);
+				applied_config_add_address (&priv->dhcp6.ip6_config, NM_PLATFORM_IP_ADDRESS_CAST (a));
 		} else {
 			g_clear_pointer (&priv->dhcp6.event_id, g_free);
 			if (ip6_config) {
@@ -7117,7 +7110,7 @@ nm_device_use_ip6_subnet (NMDevice *self, const NMPlatformIP6Address *subnet)
 
 	/* Assign a ::1 address in the subnet for us. */
 	address.address.s6_addr32[3] |= htonl (1);
-	applied_config_add_address (&priv->ac_ip6_config, &address);
+	applied_config_add_address (&priv->ac_ip6_config, NM_PLATFORM_IP_ADDRESS_CAST (&address));
 
 	_LOGD (LOGD_IP6, "ipv6-pd: using %s address (preferred for %u seconds)",
 	       nm_utils_inet6_ntop (&address.address, NULL),
