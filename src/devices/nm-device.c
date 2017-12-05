@@ -10364,9 +10364,6 @@ nm_device_set_wwan_ip4_config (NMDevice *self, NMIP4Config *config)
 {
 	NMDevicePrivate *priv = NM_DEVICE_GET_PRIVATE (self);
 
-	if ((NMIP4Config *) priv->wwan_ip4_config.orig == config)
-		return;
-
 	applied_config_init (&priv->wwan_ip4_config, config);
 	if (!ip4_config_merge_and_apply (self, TRUE))
 		_LOGW (LOGD_IP4, "failed to set WWAN IPv4 configuration");
@@ -10500,9 +10497,6 @@ void
 nm_device_set_wwan_ip6_config (NMDevice *self, NMIP6Config *config)
 {
 	NMDevicePrivate *priv = NM_DEVICE_GET_PRIVATE (self);
-
-	if ((NMIP6Config *) priv->wwan_ip6_config.orig == config)
-		return;
 
 	applied_config_init (&priv->wwan_ip6_config, config);
 	if (!ip6_config_merge_and_apply (self, TRUE))
