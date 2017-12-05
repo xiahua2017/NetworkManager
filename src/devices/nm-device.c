@@ -729,9 +729,8 @@ applied_config_add_address (AppliedConfig *config, gconstpointer address)
 			nm_ip4_config_add_address ((NMIP4Config *) config->orig, address);
 		else
 			nm_ip6_config_add_address ((NMIP6Config *) config->orig, address);
-	} else {
+	} else
 		nm_assert (!config->current);
-	}
 
 	if (config->current) {
 		if (NM_IS_IP4_CONFIG (config->current))
