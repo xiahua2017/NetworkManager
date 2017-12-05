@@ -700,6 +700,16 @@ _ip6_config_new (NMDevice *self)
 	                          nm_device_get_ip_ifindex (self));
 }
 
+static NMIPConfig *
+_ip_config_new (NMDevice *self, int addr_family)
+{
+	nm_assert_addr_family (addr_family);
+
+	return addr_family == AF_INET
+	       ? (gpointer) _ip4_config_new (self)
+	       : (gpointer) _ip6_config_new (self);
+}
+
 static void
 applied_config_clear (AppliedConfig *config)
 {
@@ -713,6 +723,14 @@ applied_config_init (AppliedConfig *config, gpointer ip_config)
 	nm_g_object_ref (ip_config);
 	applied_config_clear (config);
 	config->orig = ip_config;
+}
+
+static void
+applied_config_init_new (AppliedConfig *config, NMDevice *self, int addr_family)
+{
+	gs_unref_object NMIPConfig *c = _ip_config_new (self, addr_family);
+
+	applied_config_init (config, c);
 }
 
 static NMIPConfig *
@@ -7095,7 +7113,7 @@ nm_device_use_ip6_subnet (NMDevice *self, const NMPlatformIP6Address *subnet)
 	NMPlatformIP6Address address = *subnet;
 
 	if (!applied_config_get_current (&priv->ac_ip6_config))
-		applied_config_init (&priv->ac_ip6_config, _ip6_config_new (self));
+		applied_config_init_new (&priv->ac_ip6_config, self, AF_INET6);
 
 	/* Assign a ::1 address in the subnet for us. */
 	address.address.s6_addr32[3] |= htonl (1);
@@ -7125,7 +7143,7 @@ nm_device_copy_ip6_dns_config (NMDevice *self, NMDevice *from_device)
 		applied_config_reset_nameservers (&priv->ac_ip6_config);
 		applied_config_reset_searches (&priv->ac_ip6_config);
 	} else
-		applied_config_init (&priv->ac_ip6_config, _ip6_config_new (self));
+		applied_config_init_new (&priv->ac_ip6_config, self, AF_INET6);
 
 	if (from_device)
 		from_config = nm_device_get_ip6_config (from_device);
@@ -7582,7 +7600,7 @@ ndisc_config_changed (NMNDisc *ndisc, const NMNDiscData *rdata, guint changed_in
 	g_return_if_fail (priv->act_request);
 
 	if (!applied_config_get_current (&priv->ac_ip6_config))
-		applied_config_init (&priv->ac_ip6_config, _ip6_config_new (self));
+		applied_config_init_new (&priv->ac_ip6_config, self, AF_INET6);
 
 	if (changed & NM_NDISC_CONFIG_ADDRESSES) {
 		guint8 plen;
