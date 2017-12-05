@@ -440,15 +440,16 @@ nm_ip_config_get_dns_option (const NMIPConfig *self, guint i)
 
 #define _NM_IP_CONFIG_DISPATCH_SET_OP(dst, src, v4_func, v6_func, ...) \
 	G_STMT_START { \
+		gpointer _dst = (dst); \
 		gconstpointer _src = (src); \
-		int family = nm_ip_config_get_addr_family (dst); \
+		int family = nm_ip_config_get_addr_family (_dst); \
 		\
-		nm_assert (family == nm_ip_config_get_addr_family (src)); \
+		nm_assert (family == nm_ip_config_get_addr_family (_src)); \
 		if (family == AF_INET) { \
-			v4_func ((NMIP4Config *) dst, (const NMIP4Config *) _src, ##__VA_ARGS__); \
+			v4_func ((NMIP4Config *) _dst, (const NMIP4Config *) _src, ##__VA_ARGS__); \
 		} else { \
 			nm_assert (family == AF_INET6); \
-			v6_func ((NMIP6Config *) dst, (const NMIP6Config *) _src, ##__VA_ARGS__); \
+			v6_func ((NMIP6Config *) _dst, (const NMIP6Config *) _src, ##__VA_ARGS__); \
 		} \
 	} G_STMT_END
 
