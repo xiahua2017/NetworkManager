@@ -710,11 +710,9 @@ applied_config_clear (AppliedConfig *config)
 static void
 applied_config_init (AppliedConfig *config, gpointer ip_config)
 {
-	g_assert (NM_IS_IP_CONFIG (ip_config));
-
-	g_clear_object (&config->current);
-	g_clear_object (&config->orig);
-	config->orig = g_object_ref (ip_config);
+	nm_g_object_ref (ip_config);
+	applied_config_clear (config);
+	config->orig = ip_config;
 }
 
 static NMIPConfig *
@@ -8750,11 +8748,7 @@ nm_device_activate_schedule_ip4_config_result (NMDevice *self, NMIP4Config *conf
 	g_return_if_fail (NM_IS_DEVICE (self));
 	priv = NM_DEVICE_GET_PRIVATE (self);
 
-	if (config)
-		applied_config_init (&priv->dev_ip4_config, config);
-	else
-		applied_config_clear (&priv->dev_ip4_config);
-
+	applied_config_init (&priv->dev_ip4_config, config);
 	activation_source_schedule (self, activate_stage5_ip4_config_result, AF_INET);
 }
 
@@ -10373,11 +10367,7 @@ nm_device_set_wwan_ip4_config (NMDevice *self, NMIP4Config *config)
 	if ((NMIP4Config *) priv->wwan_ip4_config.orig == config)
 		return;
 
-	if (config)
-		applied_config_init (&priv->wwan_ip4_config, config);
-	else
-		applied_config_clear (&priv->wwan_ip4_config);
-
+	applied_config_init (&priv->wwan_ip4_config, config);
 	if (!ip4_config_merge_and_apply (self, TRUE))
 		_LOGW (LOGD_IP4, "failed to set WWAN IPv4 configuration");
 }
@@ -10514,11 +10504,7 @@ nm_device_set_wwan_ip6_config (NMDevice *self, NMIP6Config *config)
 	if ((NMIP6Config *) priv->wwan_ip6_config.orig == config)
 		return;
 
-	if (config)
-		applied_config_init (&priv->wwan_ip6_config, config);
-	else
-		applied_config_clear (&priv->wwan_ip6_config);
-
+	applied_config_init (&priv->wwan_ip6_config, config);
 	if (!ip6_config_merge_and_apply (self, TRUE))
 		_LOGW (LOGD_IP6, "failed to set WWAN IPv6 configuration");
 }
