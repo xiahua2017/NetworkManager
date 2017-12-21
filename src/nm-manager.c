@@ -4456,7 +4456,7 @@ impl_manager_add_and_activate_connection (NMManager *self,
 	NMConnection *connection = NULL;
 	gs_free NMConnection *const*connections = NULL;
 	NMActiveConnection *active = NULL;
-	NMAuthSubject *subject = NULL;
+	gs_unref_object NMAuthSubject *subject = NULL;
 	GError *error = NULL;
 	NMDevice *device = NULL;
 	gboolean vpn = FALSE;
@@ -4537,13 +4537,11 @@ impl_manager_add_and_activate_connection (NMManager *self,
 	                         g_object_unref);
 
 	nm_active_connection_authorize (active, connection, _add_and_activate_auth_done, self, context);
-	g_object_unref (subject);
 	return;
 
 error:
 	nm_audit_log_connection_op (NM_AUDIT_OP_CONN_ADD_ACTIVATE, NULL, FALSE, NULL, subject, error->message);
 	g_clear_object (&connection);
-	g_clear_object (&subject);
 	g_clear_object (&active);
 
 	g_assert (error);
