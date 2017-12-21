@@ -190,9 +190,14 @@ _nm_g_return_if_fail_warning (const char *log_domain,
 
 #include <glib/gi18n-lib.h>
 
-#else
+#elif ((NETWORKMANAGER_COMPILATION) != NM_NETWORKMANAGER_COMPILATION_INSIDE_DAEMON)
 
 #include <glib/gi18n.h>
+
+#else
+
+/* inside daemon, translation makes no sense, because the code doesn't run under
+ * the context of a localized user. */
 
 #endif /* NM_NETWORKMANAGER_COMPILATION_LIB || NM_NETWORKMANAGER_COMPILATION_LIB_LEGACY */
 

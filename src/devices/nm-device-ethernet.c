@@ -1383,7 +1383,7 @@ complete_connection (NMDevice *device,
 	                           s_pppoe ? NM_SETTING_PPPOE_SETTING_NAME : NM_SETTING_WIRED_SETTING_NAME,
 	                           existing_connections,
 	                           NULL,
-	                           s_pppoe ? _("PPPoE connection") : _("Wired connection"),
+	                           s_pppoe ? "PPPoE connection" : "Wired connection",
 	                           NULL,
 	                           s_pppoe ? FALSE : TRUE); /* No IPv6 by default yet for PPPoE */
 
@@ -1402,7 +1402,7 @@ complete_connection (NMDevice *device,
 				g_set_error_literal (error,
 				                     NM_CONNECTION_ERROR,
 				                     NM_CONNECTION_ERROR_INVALID_PROPERTY,
-				                     _("connection does not match device"));
+				                     "connection does not match device");
 				g_prefix_error (error, "%s.%s: ", NM_SETTING_WIRED_SETTING_NAME, NM_SETTING_WIRED_MAC_ADDRESS);
 				return FALSE;
 			}

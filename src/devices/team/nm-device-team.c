@@ -116,7 +116,7 @@ complete_connection (NMDevice *device,
 	                           NM_SETTING_TEAM_SETTING_NAME,
 	                           existing_connections,
 	                           NULL,
-	                           _("Team connection"),
+	                           "Team connection",
 	                           "team",
 	                           TRUE);
 

@@ -271,32 +271,32 @@ do_early_setup (int *argc, char **argv[])
 	gint64 priority64_v6 = -1;
 	GOptionEntry options[] = {
 		/* Interface/IP config */
-		{ "ifname", 'i', 0, G_OPTION_ARG_STRING, &global_opt.ifname, N_("The interface to manage"), "eth0" },
-		{ "uuid", 'u', 0, G_OPTION_ARG_STRING, &global_opt.uuid, N_("Connection UUID"),  "661e8cd0-b618-46b8-9dc9-31a52baaa16b" },
-		{ "stable-id", '\0', 0, G_OPTION_ARG_STRING, &global_opt.stable_id, N_("Connection Token for Stable IDs"),  "eth" },
-		{ "slaac", 's', 0, G_OPTION_ARG_NONE, &global_opt.slaac, N_("Whether to manage IPv6 SLAAC"), NULL },
-		{ "slaac-required", '6', 0, G_OPTION_ARG_NONE, &global_opt.slaac_required, N_("Whether SLAAC must be successful"), NULL },
-		{ "slaac-tempaddr", 't', 0, G_OPTION_ARG_INT, &global_opt.tempaddr, N_("Use an IPv6 temporary privacy address"), NULL },
-		{ "dhcp4", 'd', 0, G_OPTION_ARG_STRING, &global_opt.dhcp4_address, N_("Current DHCPv4 address"), NULL },
-		{ "dhcp4-required", '4', 0, G_OPTION_ARG_NONE, &global_opt.dhcp4_required, N_("Whether DHCPv4 must be successful"), NULL },
-		{ "dhcp4-clientid", 'c', 0, G_OPTION_ARG_STRING, &global_opt.dhcp4_clientid, N_("Hex-encoded DHCPv4 client ID"), NULL },
-		{ "dhcp4-hostname", 'h', 0, G_OPTION_ARG_STRING, &global_opt.dhcp4_hostname, N_("Hostname to send to DHCP server"), N_("barbar") },
-		{ "dhcp4-fqdn",     'F', 0, G_OPTION_ARG_STRING, &global_opt.dhcp4_fqdn, N_("FQDN to send to DHCP server"), N_("host.domain.org") },
-		{ "priority4", '\0', 0, G_OPTION_ARG_INT64, &priority64_v4, N_("Route priority for IPv4"), N_("0") },
-		{ "priority6", '\0', 0, G_OPTION_ARG_INT64, &priority64_v6, N_("Route priority for IPv6"), N_("1024") },
-		{ "iid", 'e', 0, G_OPTION_ARG_STRING, &global_opt.iid_str, N_("Hex-encoded Interface Identifier"), "" },
-		{ "addr-gen-mode", 'e', 0, G_OPTION_ARG_INT, &global_opt.addr_gen_mode, N_("IPv6 SLAAC address generation mode"), "eui64" },
-		{ "logging-backend", '\0', 0, G_OPTION_ARG_STRING, &global_opt.logging_backend, N_("The logging backend configuration value. See logging.backend in NetworkManager.conf"), NULL },
+		{ "ifname", 'i', 0, G_OPTION_ARG_STRING, &global_opt.ifname, "The interface to manage", "eth0" },
+		{ "uuid", 'u', 0, G_OPTION_ARG_STRING, &global_opt.uuid, "Connection UUID",  "661e8cd0-b618-46b8-9dc9-31a52baaa16b" },
+		{ "stable-id", '\0', 0, G_OPTION_ARG_STRING, &global_opt.stable_id, "Connection Token for Stable IDs",  "eth" },
+		{ "slaac", 's', 0, G_OPTION_ARG_NONE, &global_opt.slaac, "Whether to manage IPv6 SLAAC", NULL },
+		{ "slaac-required", '6', 0, G_OPTION_ARG_NONE, &global_opt.slaac_required, "Whether SLAAC must be successful", NULL },
+		{ "slaac-tempaddr", 't', 0, G_OPTION_ARG_INT, &global_opt.tempaddr, "Use an IPv6 temporary privacy address", NULL },
+		{ "dhcp4", 'd', 0, G_OPTION_ARG_STRING, &global_opt.dhcp4_address, "Current DHCPv4 address", NULL },
+		{ "dhcp4-required", '4', 0, G_OPTION_ARG_NONE, &global_opt.dhcp4_required, "Whether DHCPv4 must be successful", NULL },
+		{ "dhcp4-clientid", 'c', 0, G_OPTION_ARG_STRING, &global_opt.dhcp4_clientid, "Hex-encoded DHCPv4 client ID", NULL },
+		{ "dhcp4-hostname", 'h', 0, G_OPTION_ARG_STRING, &global_opt.dhcp4_hostname, "Hostname to send to DHCP server", "barbar" },
+		{ "dhcp4-fqdn",     'F', 0, G_OPTION_ARG_STRING, &global_opt.dhcp4_fqdn, "FQDN to send to DHCP server", "host.domain.org" },
+		{ "priority4", '\0', 0, G_OPTION_ARG_INT64, &priority64_v4, "Route priority for IPv4", "0" },
+		{ "priority6", '\0', 0, G_OPTION_ARG_INT64, &priority64_v6, "Route priority for IPv6", "1024" },
+		{ "iid", 'e', 0, G_OPTION_ARG_STRING, &global_opt.iid_str, "Hex-encoded Interface Identifier", "" },
+		{ "addr-gen-mode", 'e', 0, G_OPTION_ARG_INT, &global_opt.addr_gen_mode, "IPv6 SLAAC address generation mode", "eui64" },
+		{ "logging-backend", '\0', 0, G_OPTION_ARG_STRING, &global_opt.logging_backend, "The logging backend configuration value. See logging.backend in NetworkManager.conf", NULL },
 
 		/* Logging/debugging */
-		{ "version", 'V', 0, G_OPTION_ARG_NONE, &global_opt.show_version, N_("Print NetworkManager version and exit"), NULL },
-		{ "no-daemon", 'n', G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &global_opt.become_daemon, N_("Don't become a daemon"), NULL },
-		{ "debug", 'b', 0, G_OPTION_ARG_NONE, &global_opt.debug, N_("Don't become a daemon, and log to stderr"), NULL },
-		{ "log-level", 0, 0, G_OPTION_ARG_STRING, &global_opt.opt_log_level, N_("Log level: one of [%s]"), "INFO" },
+		{ "version", 'V', 0, G_OPTION_ARG_NONE, &global_opt.show_version, "Print NetworkManager version and exit", NULL },
+		{ "no-daemon", 'n', G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &global_opt.become_daemon, "Don't become a daemon", NULL },
+		{ "debug", 'b', 0, G_OPTION_ARG_NONE, &global_opt.debug, "Don't become a daemon, and log to stderr", NULL },
+		{ "log-level", 0, 0, G_OPTION_ARG_STRING, &global_opt.opt_log_level, "Log level: one of [%s]", "INFO" },
 		{ "log-domains", 0, 0, G_OPTION_ARG_STRING, &global_opt.opt_log_domains,
-		  N_("Log domains separated by ',': any combination of [%s]"),
+		  "Log domains separated by ',': any combination of [%s]",
 		  "PLATFORM,RFKILL,WIFI" },
-		{ "g-fatal-warnings", 0, 0, G_OPTION_ARG_NONE, &global_opt.g_fatal_warnings, N_("Make all warnings fatal"), NULL },
+		{ "g-fatal-warnings", 0, 0, G_OPTION_ARG_NONE, &global_opt.g_fatal_warnings, "Make all warnings fatal", NULL },
 		{NULL}
 	};
 
@@ -306,7 +306,7 @@ do_early_setup (int *argc, char **argv[])
 	                                options,
 	                                NULL,
 	                                NULL,
-	                                _("nm-iface-helper is a small, standalone process that manages a single network interface.")))
+	                                "nm-iface-helper is a small, standalone process that manages a single network interface."))
 		return FALSE;
 
 	if (priority64_v4 >= 0 && priority64_v4 <= G_MAXUINT32)
@@ -376,13 +376,13 @@ main (int argc, char *argv[])
 	nm_main_utils_ensure_root ();
 
 	if (!global_opt.ifname || !global_opt.uuid) {
-		fprintf (stderr, _("An interface name and UUID are required\n"));
+		fprintf (stderr, "An interface name and UUID are required\n");
 		return 1;
 	}
 
 	gl.ifindex = nmp_utils_if_nametoindex (global_opt.ifname);
 	if (gl.ifindex <= 0) {
-		fprintf (stderr, _("Failed to find interface index for %s (%s)\n"), global_opt.ifname, strerror (errno));
+		fprintf (stderr, "Failed to find interface index for %s (%s)\n", global_opt.ifname, strerror (errno));
 		return 1;
 	}
 	pidfile = g_strdup_printf (NMIH_PID_FILE_FMT, gl.ifindex);
@@ -395,12 +395,12 @@ main (int argc, char *argv[])
 	                       &bad_domains,
 	                       &error)) {
 		fprintf (stderr,
-		         _("%s.  Please use --help to see a list of valid options.\n"),
+		         "%s.  Please use --help to see a list of valid options.\n",
 		         error->message);
 		return 1;
 	} else if (bad_domains) {
 		fprintf (stderr,
-		         _("Ignoring unrecognized log domain(s) '%s' passed on command line.\n"),
+		         "Ignoring unrecognized log domain(s) '%s' passed on command line.\n",
 		         bad_domains);
 		g_clear_pointer (&bad_domains, g_free);
 	}
@@ -410,7 +410,7 @@ main (int argc, char *argv[])
 			int saved_errno;
 
 			saved_errno = errno;
-			fprintf (stderr, _("Could not daemonize: %s [error %u]\n"),
+			fprintf (stderr, "Could not daemonize: %s [error %u]\n",
 			         g_strerror (saved_errno),
 			         saved_errno);
 			return 1;
@@ -443,7 +443,7 @@ main (int argc, char *argv[])
 
 		bytes = nm_utils_hexstr2bin (global_opt.iid_str);
 		if (!bytes || g_bytes_get_size (bytes) != sizeof (*iid)) {
-			fprintf (stderr, _("(%s): Invalid IID %s\n"), global_opt.ifname, global_opt.iid_str);
+			fprintf (stderr, "(%s): Invalid IID %s\n", global_opt.ifname, global_opt.iid_str);
 			return 1;
 		}
 		iid = g_bytes_unref_to_data (bytes, &ignored);

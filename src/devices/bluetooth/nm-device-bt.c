@@ -261,7 +261,7 @@ complete_connection (NMDevice *device,
 			g_set_error_literal (error,
 			                     NM_CONNECTION_ERROR,
 			                     NM_CONNECTION_ERROR_INVALID_PROPERTY,
-			                     _("PAN requested, but Bluetooth device does not support NAP"));
+			                     "PAN requested, but Bluetooth device does not support NAP");
 			g_prefix_error (error, "%s.%s: ", NM_SETTING_BLUETOOTH_SETTING_NAME, NM_SETTING_BLUETOOTH_TYPE);
 			return FALSE;
 		}
@@ -271,7 +271,7 @@ complete_connection (NMDevice *device,
 			g_set_error_literal (error,
 			                     NM_CONNECTION_ERROR,
 			                     NM_CONNECTION_ERROR_INVALID_SETTING,
-			                     _("PAN connections cannot specify GSM, CDMA, or serial settings"));
+			                     "PAN connections cannot specify GSM, CDMA, or serial settings");
 			g_prefix_error (error, "%s: ",
 			                s_gsm ? NM_SETTING_GSM_SETTING_NAME :
 			                s_cdma ? NM_SETTING_CDMA_SETTING_NAME :
@@ -284,14 +284,14 @@ complete_connection (NMDevice *device,
 		              NM_SETTING_BLUETOOTH_TYPE, NM_SETTING_BLUETOOTH_TYPE_PANU,
 		              NULL);
 
-		fallback_prefix = _("PAN connection");
+		fallback_prefix = "PAN connection";
 	} else if (is_dun) {
 		/* Make sure the device supports PAN */
 		if (!(priv->capabilities & NM_BT_CAPABILITY_DUN)) {
 			g_set_error_literal (error,
 			                     NM_CONNECTION_ERROR,
 			                     NM_CONNECTION_ERROR_INVALID_PROPERTY,
-			                     _("DUN requested, but Bluetooth device does not support DUN"));
+			                     "DUN requested, but Bluetooth device does not support DUN");
 			g_prefix_error (error, "%s.%s: ", NM_SETTING_BLUETOOTH_SETTING_NAME, NM_SETTING_BLUETOOTH_TYPE);
 			return FALSE;
 		}
@@ -301,7 +301,7 @@ complete_connection (NMDevice *device,
 			g_set_error_literal (error,
 			                     NM_CONNECTION_ERROR,
 			                     NM_CONNECTION_ERROR_INVALID_SETTING,
-			                     _("DUN connection must include a GSM or CDMA setting"));
+			                     "DUN connection must include a GSM or CDMA setting");
 			g_prefix_error (error, "%s: ", NM_SETTING_BLUETOOTH_SETTING_NAME);
 			return FALSE;
 		}
@@ -311,11 +311,11 @@ complete_connection (NMDevice *device,
 		              NULL);
 
 		if (s_gsm) {
-			fallback_prefix = _("GSM connection");
+			fallback_prefix = "GSM connection";
 			if (!nm_setting_gsm_get_number (s_gsm))
 				g_object_set (G_OBJECT (s_gsm), NM_SETTING_GSM_NUMBER, "*99#", NULL);
 		} else {
-			fallback_prefix = _("CDMA connection");
+			fallback_prefix = "CDMA connection";
 			if (!nm_setting_cdma_get_number (s_cdma))
 				g_object_set (G_OBJECT (s_cdma), NM_SETTING_GSM_NUMBER, "#777", NULL);
 		}
@@ -323,7 +323,7 @@ complete_connection (NMDevice *device,
 		g_set_error_literal (error,
 		                     NM_CONNECTION_ERROR,
 		                     NM_CONNECTION_ERROR_INVALID_PROPERTY,
-		                     _("Unknown/unhandled Bluetooth connection type"));
+		                     "Unknown/unhandled Bluetooth connection type");
 		g_prefix_error (error, "%s.%s: ", NM_SETTING_BLUETOOTH_SETTING_NAME, NM_SETTING_BLUETOOTH_TYPE);
 		return FALSE;
 	}
@@ -344,7 +344,7 @@ complete_connection (NMDevice *device,
 			g_set_error_literal (error,
 			                     NM_CONNECTION_ERROR,
 			                     NM_CONNECTION_ERROR_INVALID_PROPERTY,
-			                     _("connection does not match device"));
+			                     "connection does not match device");
 			g_prefix_error (error, "%s.%s: ", NM_SETTING_BLUETOOTH_SETTING_NAME, NM_SETTING_BLUETOOTH_BDADDR);
 			return FALSE;
 		}

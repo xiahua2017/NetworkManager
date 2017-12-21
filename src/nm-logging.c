@@ -264,7 +264,7 @@ match_log_level (const char  *level,
 	}
 
 	g_set_error (error, NM_MANAGER_ERROR, NM_MANAGER_ERROR_UNKNOWN_LOG_LEVEL,
-	             _("Unknown log level '%s'"), level);
+	             "Unknown log level '%s'", level);
 	return FALSE;
 }
 
@@ -366,7 +366,7 @@ nm_logging_setup (const char  *level,
 			if (!bits) {
 				if (!bad_domains) {
 					g_set_error (error, NM_MANAGER_ERROR, NM_MANAGER_ERROR_UNKNOWN_LOG_DOMAIN,
-					             _("Unknown log domain '%s'"), *iter);
+					             "Unknown log domain '%s'", *iter);
 					return FALSE;
 				}
 

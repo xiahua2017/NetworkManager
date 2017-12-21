@@ -67,7 +67,7 @@ complete_connection (NMDevice *device,
 	                           NM_SETTING_DUMMY_SETTING_NAME,
 	                           existing_connections,
 	                           NULL,
-	                           _("Dummy connection"),
+	                           "Dummy connection",
 	                           NULL,
 	                           TRUE);
 

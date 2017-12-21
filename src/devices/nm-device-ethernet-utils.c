@@ -40,7 +40,7 @@ nm_device_ethernet_utils_get_default_wired_name (NMConnection *const *connection
 	for (i = 1; TRUE; i++) {
 		char *temp;
 
-		temp = g_strdup_printf (_("Wired connection %u"), i);
+		temp = g_strdup_printf ("Wired connection %u", i);
 		if (   name_idx
 		    && g_hash_table_contains (name_idx, temp)) {
 			g_free (temp);

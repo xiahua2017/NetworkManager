@@ -149,7 +149,7 @@ complete_connection (NMDevice *device,
 	                           NM_SETTING_OLPC_MESH_SETTING_NAME,
 	                           existing_connections,
 	                           NULL,
-	                           _("Mesh"),
+	                           "Mesh",
 	                           NULL,
 	                           FALSE); /* No IPv6 by default */
 

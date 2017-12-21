@@ -692,7 +692,7 @@ complete_connection (NMModem *_self,
 			g_set_error_literal (error,
 			                     NM_CONNECTION_ERROR,
 			                     NM_CONNECTION_ERROR_MISSING_SETTING,
-			                     _("GSM mobile broadband connection requires a 'gsm' setting"));
+			                     "GSM mobile broadband connection requires a 'gsm' setting");
 			g_prefix_error (error, "%s: ", NM_SETTING_GSM_SETTING_NAME);
 			return FALSE;
 		}
@@ -706,7 +706,7 @@ complete_connection (NMModem *_self,
 		                           NM_SETTING_GSM_SETTING_NAME,
 		                           existing_connections,
 		                           NULL,
-		                           _("GSM connection"),
+		                           "GSM connection",
 		                           NULL,
 		                           FALSE); /* No IPv6 yet by default */
 
@@ -730,7 +730,7 @@ complete_connection (NMModem *_self,
 		                           NM_SETTING_CDMA_SETTING_NAME,
 		                           existing_connections,
 		                           NULL,
-		                           _("CDMA connection"),
+		                           "CDMA connection",
 		                           NULL,
 		                           FALSE); /* No IPv6 yet by default */
 

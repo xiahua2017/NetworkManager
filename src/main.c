@@ -178,7 +178,7 @@ print_config (NMConfigCmdLineOptions *config_cli)
 
 	config = nm_config_new (config_cli, CONFIG_ATOMIC_SECTION_PREFIXES, &error);
 	if (config == NULL) {
-		fprintf (stderr, _("Failed to read configuration: %s\n"), error->message);
+		fprintf (stderr, "Failed to read configuration: %s\n", error->message);
 		return 7;
 	}
 
@@ -192,16 +192,16 @@ static void
 do_early_setup (int *argc, char **argv[], NMConfigCmdLineOptions *config_cli)
 {
 	GOptionEntry options[] = {
-		{ "version", 'V', 0, G_OPTION_ARG_NONE, &global_opt.show_version, N_("Print NetworkManager version and exit"), NULL },
-		{ "no-daemon", 'n', G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &global_opt.become_daemon, N_("Don't become a daemon"), NULL },
-		{ "log-level", 0, 0, G_OPTION_ARG_STRING, &global_opt.opt_log_level, N_("Log level: one of [%s]"), "INFO" },
+		{ "version", 'V', 0, G_OPTION_ARG_NONE, &global_opt.show_version, "Print NetworkManager version and exit", NULL },
+		{ "no-daemon", 'n', G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &global_opt.become_daemon, "Don't become a daemon", NULL },
+		{ "log-level", 0, 0, G_OPTION_ARG_STRING, &global_opt.opt_log_level, "Log level: one of [%s]", "INFO" },
 		{ "log-domains", 0, 0, G_OPTION_ARG_STRING, &global_opt.opt_log_domains,
-		  N_("Log domains separated by ',': any combination of [%s]"),
+		  "Log domains separated by ',': any combination of [%s]",
 		  "PLATFORM,RFKILL,WIFI" },
-		{ "g-fatal-warnings", 0, 0, G_OPTION_ARG_NONE, &global_opt.g_fatal_warnings, N_("Make all warnings fatal"), NULL },
-		{ "pid-file", 'p', 0, G_OPTION_ARG_FILENAME, &global_opt.pidfile, N_("Specify the location of a PID file"), NM_DEFAULT_PID_FILE },
+		{ "g-fatal-warnings", 0, 0, G_OPTION_ARG_NONE, &global_opt.g_fatal_warnings, "Make all warnings fatal", NULL },
+		{ "pid-file", 'p', 0, G_OPTION_ARG_FILENAME, &global_opt.pidfile, "Specify the location of a PID file", NM_DEFAULT_PID_FILE },
 		{ "run-from-build-dir", 0, 0, G_OPTION_ARG_NONE, &global_opt.run_from_build_dir, "Run from build directory", NULL },
-		{ "print-config", 0, 0, G_OPTION_ARG_NONE, &global_opt.print_config, N_("Print NetworkManager configuration and exit"), NULL },
+		{ "print-config", 0, 0, G_OPTION_ARG_NONE, &global_opt.print_config, "Print NetworkManager configuration and exit", NULL },
 		{NULL}
 	};
 
@@ -211,7 +211,7 @@ do_early_setup (int *argc, char **argv[], NMConfigCmdLineOptions *config_cli)
 	                                options,
 	                                (void (*)(gpointer, GOptionContext *)) nm_config_cmd_line_options_add_to_entries,
 	                                config_cli,
-	                                _("NetworkManager monitors all network connections and automatically\nchooses the best connection to use.  It also allows the user to\nspecify wireless access points which wireless cards in the computer\nshould associate with.")))
+	                                "NetworkManager monitors all network connections and automatically\nchooses the best connection to use.  It also allows the user to\nspecify wireless access points which wireless cards in the computer\nshould associate with."))
 		exit (1);
 
 	global_opt.pidfile = global_opt.pidfile ? global_opt.pidfile : g_strdup (NM_DEFAULT_PID_FILE);
@@ -302,12 +302,12 @@ main (int argc, char *argv[])
 	                       &bad_domains,
 	                       &error)) {
 		fprintf (stderr,
-		         _("%s.  Please use --help to see a list of valid options.\n"),
+		         "%s.  Please use --help to see a list of valid options.\n",
 		         error->message);
 		exit (1);
 	} else if (bad_domains) {
 		fprintf (stderr,
-		         _("Ignoring unrecognized log domain(s) '%s' passed on command line.\n"),
+		         "Ignoring unrecognized log domain(s) '%s' passed on command line.\n",
 		         bad_domains);
 		g_clear_pointer (&bad_domains, g_free);
 	}
@@ -317,7 +317,7 @@ main (int argc, char *argv[])
 	nm_config_cmd_line_options_free (config_cli);
 	config_cli = NULL;
 	if (config == NULL) {
-		fprintf (stderr, _("Failed to read configuration: %s\n"),
+		fprintf (stderr, "Failed to read configuration: %s\n",
 		         error->message);
 		exit (1);
 	}
@@ -332,12 +332,12 @@ main (int argc, char *argv[])
 		                       nm_config_get_log_domains (config),
 		                       &bad_domains,
 		                       &error)) {
-			fprintf (stderr, _("Error in configuration file: %s.\n"),
+			fprintf (stderr, "Error in configuration file: %s.\n",
 			         error->message);
 			exit (1);
 		} else if (bad_domains) {
 			fprintf (stderr,
-			         _("Ignoring unrecognized log domain(s) '%s' from config files.\n"),
+			         "Ignoring unrecognized log domain(s) '%s' from config files.\n",
 			         bad_domains);
 			g_clear_pointer (&bad_domains, g_free);
 		}
@@ -348,7 +348,7 @@ main (int argc, char *argv[])
 			int saved_errno;
 
 			saved_errno = errno;
-			fprintf (stderr, _("Could not daemonize: %s [error %u]\n"),
+			fprintf (stderr, "Could not daemonize: %s [error %u]\n",
 			         g_strerror (saved_errno),
 			         saved_errno);
 			exit (1);

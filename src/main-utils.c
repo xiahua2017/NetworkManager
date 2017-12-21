@@ -28,9 +28,10 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <locale.h>
-
 #include <glib/gstdio.h>
 #include <glib-unix.h>
+
+#include <glib/gi18n.h>
 
 #include "main-utils.h"
 #include "NetworkManagerUtils.h"
@@ -96,18 +97,18 @@ nm_main_utils_write_pidfile (const char *pidfile)
 	gboolean success = FALSE;
 
 	if ((fd = open (pidfile, O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 00644)) < 0) {
-		fprintf (stderr, _("Opening %s failed: %s\n"), pidfile, strerror (errno));
+		fprintf (stderr, "Opening %s failed: %s\n", pidfile, strerror (errno));
 		return FALSE;
 	}
 
 	g_snprintf (pid, sizeof (pid), "%d", getpid ());
 	if (write (fd, pid, strlen (pid)) < 0)
-		fprintf (stderr, _("Writing to %s failed: %s\n"), pidfile, strerror (errno));
+		fprintf (stderr, "Writing to %s failed: %s\n", pidfile, strerror (errno));
 	else
 		success = TRUE;
 
 	if (nm_close (fd))
-		fprintf (stderr, _("Closing %s failed: %s\n"), pidfile, strerror (errno));
+		fprintf (stderr, "Closing %s failed: %s\n", pidfile, strerror (errno));
 
 	return success;
 }
@@ -145,7 +146,7 @@ nm_main_utils_ensure_rundir ()
 	/* Setup runtime directory */
 	if (g_mkdir_with_parents (NMRUNDIR, 0755) != 0) {
 		errsv = errno;
-		fprintf (stderr, _("Cannot create '%s': %s"), NMRUNDIR, g_strerror (errsv));
+		fprintf (stderr, "Cannot create '%s': %s", NMRUNDIR, g_strerror (errsv));
 		exit (1);
 	}
 
@@ -156,7 +157,7 @@ nm_main_utils_ensure_rundir ()
 	if (g_mkdir (NM_CONFIG_DEVICE_STATE_DIR, 0755) != 0) {
 		errsv = errno;
 		if (errsv != EEXIST) {
-			fprintf (stderr, _("Cannot create '%s': %s"), NM_CONFIG_DEVICE_STATE_DIR, g_strerror (errsv));
+			fprintf (stderr, "Cannot create '%s': %s", NM_CONFIG_DEVICE_STATE_DIR, g_strerror (errsv));
 			exit (1);
 		}
 	}
@@ -209,7 +210,7 @@ nm_main_utils_ensure_not_running_pidfile (const char *pidfile)
 	if (strcmp (process_name, prgname) == 0) {
 		/* Check that the process exists */
 		if (kill (pid, 0) == 0) {
-			fprintf (stderr, _("%s is already running (pid %ld)\n"), prgname, pid);
+			fprintf (stderr, "%s is already running (pid %ld)\n", prgname, pid);
 			exit (1);
 		}
 	}
@@ -219,7 +220,7 @@ void
 nm_main_utils_ensure_root ()
 {
 	if (getuid () != 0) {
-		fprintf (stderr, _("You must be root to run %s!\n"), g_get_prgname () ?: "");
+		fprintf (stderr, "You must be root to run %s!\n", g_get_prgname () ?: "");
 		exit (1);
 	}
 }
@@ -283,7 +284,7 @@ nm_main_utils_early_setup (const char *progname,
 
 	success = g_option_context_parse (opt_ctx, argc, argv, &error);
 	if (!success) {
-		fprintf (stderr, _("%s.  Please use --help to see a list of valid options.\n"),
+		fprintf (stderr, "%s.  Please use --help to see a list of valid options.\n",
 		         error->message);
 		g_clear_error (&error);
 	}

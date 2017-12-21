@@ -4560,7 +4560,7 @@ bond_connection_from_ifcfg (const char *file,
 
 	connection = nm_simple_connection_new ();
 
-	con_setting = make_connection_setting (file, ifcfg, NM_SETTING_BOND_SETTING_NAME, NULL, _("Bond"));
+	con_setting = make_connection_setting (file, ifcfg, NM_SETTING_BOND_SETTING_NAME, NULL, "Bond");
 	if (!con_setting) {
 		g_set_error (error, NM_SETTINGS_ERROR, NM_SETTINGS_ERROR_INVALID_CONNECTION,
 		             "Failed to create connection setting.");
@@ -4663,7 +4663,7 @@ team_connection_from_ifcfg (const char *file,
 
 	connection = nm_simple_connection_new ();
 
-	con_setting = make_connection_setting (file, ifcfg, NM_SETTING_TEAM_SETTING_NAME, NULL, _("Team"));
+	con_setting = make_connection_setting (file, ifcfg, NM_SETTING_TEAM_SETTING_NAME, NULL, "Team");
 	if (!con_setting) {
 		g_set_error (error, NM_SETTINGS_ERROR, NM_SETTINGS_ERROR_INVALID_CONNECTION,
 		             "Failed to create connection setting.");
@@ -4896,7 +4896,7 @@ bridge_connection_from_ifcfg (const char *file,
 
 	connection = nm_simple_connection_new ();
 
-	con_setting = make_connection_setting (file, ifcfg, NM_SETTING_BRIDGE_SETTING_NAME, NULL, _("Bridge"));
+	con_setting = make_connection_setting (file, ifcfg, NM_SETTING_BRIDGE_SETTING_NAME, NULL, "Bridge");
 	if (!con_setting) {
 		g_set_error (error, NM_SETTINGS_ERROR, NM_SETTINGS_ERROR_INVALID_CONNECTION,
 		             "Failed to create connection setting.");

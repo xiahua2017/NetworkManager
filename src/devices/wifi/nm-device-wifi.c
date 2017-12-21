@@ -864,7 +864,7 @@ complete_connection (NMDevice *device,
 		g_set_error_literal (error,
 		                     NM_CONNECTION_ERROR,
 		                     NM_CONNECTION_ERROR_INVALID_SETTING,
-		                     _("WPA Ad-Hoc disabled due to kernel bugs"));
+		                     "WPA Ad-Hoc disabled due to kernel bugs");
 		g_prefix_error (error, "%s: ", NM_SETTING_WIRELESS_SECURITY_SETTING_NAME);
 		if (tmp_ssid)
 			g_byte_array_unref (tmp_ssid);
@@ -897,7 +897,7 @@ complete_connection (NMDevice *device,
 				g_set_error_literal (error,
 				                     NM_CONNECTION_ERROR,
 				                     NM_CONNECTION_ERROR_INVALID_PROPERTY,
-				                     _("connection does not match device"));
+				                     "connection does not match device");
 				g_prefix_error (error, "%s.%s: ", NM_SETTING_WIRELESS_SETTING_NAME, NM_SETTING_WIRELESS_MAC_ADDRESS);
 				return FALSE;
 			}

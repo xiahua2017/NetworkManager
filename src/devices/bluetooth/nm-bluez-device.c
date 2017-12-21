@@ -208,7 +208,7 @@ pan_connection_check_create (NMBluezDevice *self)
 
 	/* Setting: Connection */
 	nm_utils_uuid_generate_buf (uuid);
-	id = g_strdup_printf (_("%s Network"), priv->name);
+	id = g_strdup_printf ("%s Network", priv->name);
 	setting = nm_setting_connection_new ();
 	g_object_set (setting,
 	              NM_SETTING_CONNECTION_ID, id,

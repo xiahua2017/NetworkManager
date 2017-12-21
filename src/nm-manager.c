@@ -4502,7 +4502,7 @@ impl_manager_add_and_activate_connection (NMManager *self,
 		                           NM_SETTING_VPN_SETTING_NAME,
 		                           (NMConnection **) nm_settings_get_connections (priv->settings, NULL),
 		                           NULL,
-		                           _("VPN connection"),
+		                           "VPN connection",
 		                           NULL,
 		                           FALSE); /* No IPv6 by default for now */
 	} else {

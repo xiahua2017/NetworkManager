@@ -277,7 +277,7 @@ nm_dhcp_dhclient_create_config (const char *interface,
 	g_return_val_if_fail (!anycast_addr || nm_utils_hwaddr_valid (anycast_addr, ETH_ALEN), NULL);
 	g_return_val_if_fail (NM_IN_SET (addr_family, AF_INET, AF_INET6), NULL);
 
-	new_contents = g_string_new (_("# Created by NetworkManager\n"));
+	new_contents = g_string_new ("# Created by NetworkManager\n");
 	fqdn_opts = g_ptr_array_sized_new (5);
 	reqs = g_ptr_array_new_full (5, g_free);
 
@@ -287,7 +287,7 @@ nm_dhcp_dhclient_create_config (const char *interface,
 		gboolean in_req = FALSE;
 		char intf[IFNAMSIZ];
 
-		g_string_append_printf (new_contents, _("# Merged from %s\n\n"), orig_path);
+		g_string_append_printf (new_contents, "# Merged from %s\n\n", orig_path);
 		intf[0] = '\0';
 
 		lines = g_strsplit_set (orig_contents, "\n\r", 0);
