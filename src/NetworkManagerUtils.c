@@ -72,60 +72,42 @@ get_new_connection_name (NMConnection *const*existing_connections,
                          const char *preferred,
                          const char *fallback_prefix)
 {
-	GSList *names = NULL;
-	const GSList *iter;
-	char *cname = NULL;
-	int i = 0;
-	guint j;
-	gboolean preferred_found = FALSE;
+	gs_unref_hashtable GHashTable *name_idx = NULL;
+	guint i;
 
-	g_assert (fallback_prefix);
+	nm_assert (fallback_prefix);
 
-	for (j = 0; existing_connections && existing_connections[j]; j++) {
-		NMConnection *candidate = existing_connections[j];
-		const char *id;
-
-		id = nm_connection_get_id (candidate);
-		g_assert (id);
-		names = g_slist_append (names, (gpointer) id);
-
-		if (preferred && !preferred_found && (strcmp (preferred, id) == 0))
-			preferred_found = TRUE;
+	if (existing_connections && existing_connections[0]) {
+		name_idx = g_hash_table_new (nm_str_hash, g_str_equal);
+		for (i = 0; existing_connections[i]; i++) {
+			g_hash_table_add (name_idx,
+			                  (gpointer) nm_connection_get_id (existing_connections[i]));
+		}
 	}
 
-	/* Return the preferred name if it was unique */
-	if (preferred && !preferred_found) {
-		g_slist_free (names);
+	if (   preferred
+	    && (   !name_idx
+	        || !g_hash_table_contains (name_idx, preferred)))
 		return g_strdup (preferred);
-	}
 
 	/* Otherwise find the next available unique connection name using the given
 	 * connection name template.
 	 */
-	while (!cname && (i++ < 10000)) {
+	for (i = 0; TRUE; i++) {
 		char *temp;
-		gboolean found = FALSE;
 
 		/* Translators: the first %s is a prefix for the connection id, such
 		 * as "Wired Connection" or "VPN Connection". The %d is a number
 		 * that is combined with the first argument to create a unique
 		 * connection id. */
-		temp = g_strdup_printf (C_("connection id fallback", "%s %d"),
+		temp = g_strdup_printf (C_("connection id fallback", "%s %u"),
 		                        fallback_prefix, i);
-		for (iter = names; iter; iter = g_slist_next (iter)) {
-			if (!strcmp (iter->data, temp)) {
-				found = TRUE;
-				break;
-			}
-		}
-		if (!found)
-			cname = temp;
-		else
-			g_free (temp);
-	}
+		if (   !name_idx
+		    || !g_hash_table_contains (name_idx, temp))
+			return temp;
 
-	g_slist_free (names);
-	return cname;
+		g_free (temp);
+	}
 }
 
 static char *
@@ -133,34 +115,37 @@ get_new_connection_ifname (NMPlatform *platform,
                            NMConnection *const*existing_connections,
                            const char *prefix)
 {
-	int i;
-	guint j;
-	char *name;
-	gboolean found;
+	gs_unref_hashtable GHashTable *name_idx = NULL;
+	guint i;
 
-	for (i = 0; i < 500; i++) {
-		name = g_strdup_printf ("%s%d", prefix, i);
+	if (existing_connections && existing_connections[0]) {
+		for (i = 0; existing_connections[i]; i++) {
+			const char *n;
 
-		if (nm_platform_link_get_by_ifname (platform, name))
-			goto next;
+			n = nm_connection_get_interface_name (existing_connections[i]);
+			if (!n)
+				continue;
 
-		for (j = 0; existing_connections && existing_connections[j]; j++) {
-			NMConnection *candidate = existing_connections[j];
-
-			if (g_strcmp0 (nm_connection_get_interface_name (candidate), name) == 0) {
-				found = TRUE;
-				break;
-			}
+			if (!name_idx)
+				name_idx = g_hash_table_new (nm_str_hash, g_str_equal);
+			g_hash_table_add (name_idx, (gpointer) n);
 		}
-
-		if (!found)
-			return name;
-
-	next:
-		g_free (name);
 	}
 
-	return NULL;
+	for (i = 0; TRUE; i++) {
+		gs_free char *name = NULL;
+
+		name = g_strdup_printf ("%s%u", prefix, i);
+
+		if (   name_idx
+		    && g_hash_table_contains (name_idx, name))
+			continue;
+
+		if (nm_platform_link_get_by_ifname (platform, name))
+			continue;
+
+		return g_steal_pointer (&name);
+	}
 }
 
 const char *

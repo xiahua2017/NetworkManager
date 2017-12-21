@@ -27,24 +27,26 @@
 char *
 nm_device_ethernet_utils_get_default_wired_name (NMConnection *const *connections)
 {
-	char *temp;
-	guint j;
-	int i;
+	gs_unref_hashtable GHashTable *name_idx = NULL;
+	guint i;
 
-	/* Find the next available unique connection name */
-	for (i = 1; i <= 10000; i++) {
-		temp = g_strdup_printf (_("Wired connection %d"), i);
-		for (j = 0; connections[j]; j++) {
-			if (nm_streq0 (nm_connection_get_id (connections[j]), temp)) {
-				g_free (temp);
-				goto next;
-			}
-		}
-		return temp;
-next:
-		;
+	if (connections && connections[0]) {
+		name_idx = g_hash_table_new (nm_str_hash, g_str_equal);
+		for (i = 0; connections[i]; i++)
+			g_hash_table_add (name_idx, (gpointer) nm_connection_get_id (connections[i]));
 	}
 
-	return NULL;
+	/* Find the next available unique connection name */
+	for (i = 1; TRUE; i++) {
+		char *temp;
+
+		temp = g_strdup_printf (_("Wired connection %u"), i);
+		if (   name_idx
+		    && g_hash_table_contains (name_idx, temp)) {
+			g_free (temp);
+			continue;
+		}
+		return temp;
+	}
 }
 
