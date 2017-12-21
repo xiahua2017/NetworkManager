@@ -1065,7 +1065,7 @@ nm_modem_check_connection_compatible (NMModem *self, NMConnection *connection)
 gboolean
 nm_modem_complete_connection (NMModem *self,
                               NMConnection *connection,
-                              const GSList *existing_connections,
+                              NMConnection *const*existing_connections,
                               GError **error)
 {
 	if (NM_MODEM_GET_CLASS (self)->complete_connection)

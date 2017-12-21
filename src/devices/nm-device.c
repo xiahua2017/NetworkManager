@@ -4691,7 +4691,7 @@ gboolean
 nm_device_complete_connection (NMDevice *self,
                                NMConnection *connection,
                                const char *specific_object,
-                               const GSList *existing_connections,
+                               NMConnection *const*existing_connections,
                                GError **error)
 {
 	gboolean success = FALSE;

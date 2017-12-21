@@ -4454,7 +4454,7 @@ impl_manager_add_and_activate_connection (NMManager *self,
 {
 	NMManagerPrivate *priv = NM_MANAGER_GET_PRIVATE (self);
 	NMConnection *connection = NULL;
-	GSList *all_connections = NULL;
+	gs_free NMConnection *const*connections = NULL;
 	NMActiveConnection *active = NULL;
 	NMAuthSubject *subject = NULL;
 	GError *error = NULL;
@@ -4488,19 +4488,10 @@ impl_manager_add_and_activate_connection (NMManager *self,
 	if (!subject)
 		goto error;
 
-	{
-		gs_free NMSettingsConnection **connections = NULL;
-		guint i, len;
+	connections = (NMConnection **) nm_settings_get_connections_clone (priv->settings, NULL,
+	                                                                   NULL, NULL,
+	                                                                   nm_settings_connection_cmp_autoconnect_priority_p_with_data, NULL);
 
-		connections = nm_settings_get_connections_clone (priv->settings, &len,
-		                                                 NULL, NULL,
-		                                                 nm_settings_connection_cmp_autoconnect_priority_p_with_data, NULL);
-		all_connections = NULL;
-		for (i = len; i > 0; ) {
-			i--;
-			all_connections = g_slist_prepend (all_connections, connections[i]);
-		}
-	}
 	if (vpn) {
 		/* Try to fill the VPN's connection setting and name at least */
 		if (!nm_connection_get_setting_vpn (connection)) {
@@ -4514,7 +4505,7 @@ impl_manager_add_and_activate_connection (NMManager *self,
 		nm_utils_complete_generic (priv->platform,
 		                           connection,
 		                           NM_SETTING_VPN_SETTING_NAME,
-		                           all_connections,
+		                           connections,
 		                           NULL,
 		                           _("VPN connection"),
 		                           NULL,
@@ -4524,12 +4515,10 @@ impl_manager_add_and_activate_connection (NMManager *self,
 		if (!nm_device_complete_connection (device,
 		                                    connection,
 		                                    specific_object_path,
-		                                    all_connections,
+		                                    connections,
 		                                    &error))
 			goto error;
 	}
-	g_slist_free (all_connections);
-	all_connections = NULL;
 
 	active = _new_active_connection (self,
 	                                 connection,
@@ -4554,7 +4543,6 @@ impl_manager_add_and_activate_connection (NMManager *self,
 error:
 	nm_audit_log_connection_op (NM_AUDIT_OP_CONN_ADD_ACTIVATE, NULL, FALSE, NULL, subject, error->message);
 	g_clear_object (&connection);
-	g_slist_free (all_connections);
 	g_clear_object (&subject);
 	g_clear_object (&active);
 
