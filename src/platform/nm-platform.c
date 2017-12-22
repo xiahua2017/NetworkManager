@@ -4751,6 +4751,7 @@ nm_platform_lnk_ip6tnl_to_string (const NMPlatformLnkIp6Tnl *lnk, char *buf, gsi
 	            "%s" /* encap limit */
 	            "%s" /* flow label */
 	            "%s" /* proto */
+	            " flags %s"
 	            "",
 	            nm_sprintf_buf (str_remote, " remote %s", nm_utils_inet6_ntop (&lnk->remote, str_remote1)),
 	            nm_sprintf_buf (str_local, " local %s", nm_utils_inet6_ntop (&lnk->local, str_local1)),
@@ -4759,7 +4760,8 @@ nm_platform_lnk_ip6tnl_to_string (const NMPlatformLnkIp6Tnl *lnk, char *buf, gsi
 	            lnk->tclass == 1 ? " tclass inherit" : nm_sprintf_buf (str_tclass, " tclass 0x%x", lnk->tclass),
 	            nm_sprintf_buf (str_encap, " encap-limit %u", lnk->encap_limit),
 	            nm_sprintf_buf (str_flow, " flow-label 0x05%x", lnk->flow_label),
-	            nm_sprintf_buf (str_proto, " proto %u", lnk->proto));
+	            nm_sprintf_buf (str_proto, " proto %u", lnk->proto),
+	            nm_utils_enum_to_str (nm_ip_tunnel_flags_get_type(), lnk->flags));
 	return buf;
 }
 

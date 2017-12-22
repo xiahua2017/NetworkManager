@@ -36,6 +36,7 @@
 #include <linux/if_link.h>
 #include <linux/if_tun.h>
 #include <linux/if_tunnel.h>
+#include <linux/ip6_tunnel.h>
 #include <netlink/netlink.h>
 #include <netlink/msg.h>
 #include <libudev.h>
@@ -715,6 +716,48 @@ _addrtime_get_lifetimes (guint32 timestamp,
 
 /*****************************************************************************/
 
+static const struct {
+	NMIPTunnelFlags s;
+	guint32 p;
+} ip6tnl_flags_map[] = {
+	{ NM_IP_TUNNEL_FLAG_IP6_IGN_ENCAP_LIMIT,    IP6_TNL_F_IGN_ENCAP_LIMIT },
+	{ NM_IP_TUNNEL_FLAG_IP6_USE_ORIG_TCLASS,    IP6_TNL_F_USE_ORIG_TCLASS },
+	{ NM_IP_TUNNEL_FLAG_IP6_USE_ORIG_FLOWLABEL, IP6_TNL_F_USE_ORIG_FLOWLABEL },
+	{ NM_IP_TUNNEL_FLAG_IP6_MIP6_DEV,           IP6_TNL_F_MIP6_DEV },
+	{ NM_IP_TUNNEL_FLAG_IP6_RCV_DSCP_COPY,      IP6_TNL_F_RCV_DSCP_COPY },
+	{ NM_IP_TUNNEL_FLAG_IP6_USE_ORIG_FWMARK,    IP6_TNL_F_USE_ORIG_FWMARK },
+};
+
+static guint32
+ip6tnl_flags_setting_to_plat (NMIPTunnelFlags flags)
+{
+	guint32 ret = 0;
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (ip6tnl_flags_map); i++) {
+		if (NM_FLAGS_ANY (flags, ip6tnl_flags_map[i].s))
+			ret |= ip6tnl_flags_map[i].p;
+	}
+
+	return ret;
+}
+
+static NMIPTunnelFlags
+ip6tnl_flags_plat_to_setting (guint32 flags)
+{
+	NMIPTunnelFlags ret = 0;
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (ip6tnl_flags_map); i++) {
+		if (NM_FLAGS_ANY (flags, ip6tnl_flags_map[i].p))
+			ret |= ip6tnl_flags_map[i].s;
+	}
+
+	return ret;
+}
+
+/*****************************************************************************/
+
 static const NMPObject *
 _lookup_cached_link (const NMPCache *cache, int ifindex, gboolean *completed_from_cache, const NMPObject **link_cached)
 {
@@ -1292,6 +1335,7 @@ _parse_lnk_ip6tnl (const char *kind, struct nlattr *info_data)
 		[IFLA_IPTUN_ENCAP_LIMIT] = { .type = NLA_U8 },
 		[IFLA_IPTUN_FLOWINFO]    = { .type = NLA_U32 },
 		[IFLA_IPTUN_PROTO]       = { .type = NLA_U8 },
+		[IFLA_IPTUN_FLAGS]       = { .type = NLA_U32 },
 	};
 	struct nlattr *tb[IFLA_IPTUN_MAX + 1];
 	int err;
@@ -1326,6 +1370,8 @@ _parse_lnk_ip6tnl (const char *kind, struct nlattr *info_data)
 	}
 	if (tb[IFLA_IPTUN_PROTO])
 		props->proto = nla_get_u8 (tb[IFLA_IPTUN_PROTO]);
+	if (tb[IFLA_IPTUN_FLAGS])
+		props->flags = ip6tnl_flags_plat_to_setting (nla_get_u32 (tb[IFLA_IPTUN_FLAGS]));
 
 	return obj;
 }
@@ -5386,6 +5432,7 @@ link_ip6tnl_add (NMPlatform *platform,
 	            & IP6_FLOWINFO_TCLASS_MASK;
 	NLA_PUT_U32 (nlmsg, IFLA_IPTUN_FLOWINFO, htonl (flowinfo));
 	NLA_PUT_U8 (nlmsg, IFLA_IPTUN_PROTO, props->proto);
+	NLA_PUT_U32 (nlmsg, IFLA_IPTUN_FLAGS, ip6tnl_flags_setting_to_plat (props->flags));
 
 	nla_nest_end (nlmsg, data);
 	nla_nest_end (nlmsg, info);
