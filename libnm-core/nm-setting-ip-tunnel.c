@@ -831,7 +831,6 @@ nm_setting_ip_tunnel_class_init (NMSettingIPTunnelClass *setting_class)
 		 g_param_spec_uint (NM_SETTING_IP_TUNNEL_FLAGS, "", "",
 		                    0, G_MAXUINT32, 0,
 		                    G_PARAM_READWRITE |
-		                    G_PARAM_CONSTRUCT |
 		                    NM_SETTING_PARAM_FUZZY_IGNORE |
 		                    G_PARAM_STATIC_STRINGS));
 }
