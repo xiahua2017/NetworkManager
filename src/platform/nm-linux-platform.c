@@ -1329,7 +1329,7 @@ _parse_lnk_ip6tnl (const char *kind, struct nlattr *info_data)
 	if (tb[IFLA_IPTUN_PROTO])
 		props->proto = nla_get_u8 (tb[IFLA_IPTUN_PROTO]);
 	if (tb[IFLA_IPTUN_FLAGS])
-		props->flags = nla_get_u32 (tb[IFLA_IPTUN_FLAGS]) & 0xFFFF; /* ignore kernel internal flags */
+		props->flags = nla_get_u32 (tb[IFLA_IPTUN_FLAGS]);
 
 	return obj;
 }

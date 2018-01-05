@@ -964,7 +964,9 @@ test_software_detect (gconstpointer user_data)
 				g_assert_cmpint (plnk->ttl, ==, 0);
 				g_assert_cmpint (plnk->flow_label, ==, 1338);
 				g_assert_cmpint (plnk->proto, ==, IPPROTO_IPV6);
-				g_assert_cmpint (plnk->flags, ==, IP6_TNL_F_IGN_ENCAP_LIMIT | IP6_TNL_F_USE_ORIG_TCLASS);
+				g_assert_cmpint (plnk->flags & 0xFFFF, /* ignore kernel internal flags */
+				                 ==,
+				                 IP6_TNL_F_IGN_ENCAP_LIMIT | IP6_TNL_F_USE_ORIG_TCLASS);
 				break;
 			}
 			break;
