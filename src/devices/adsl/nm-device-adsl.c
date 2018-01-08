@@ -431,8 +431,18 @@ ppp_state_changed (NMPPPManager *ppp_manager, NMPPPStatus status, gpointer user_
 }
 
 static void
+ppp_ifindex_set (NMPPPManager *ppp_manager,
+                 int ifindex,
+                 const char *iface,
+                 gpointer user_data)
+{
+	NMDevice *device = NM_DEVICE (user_data);
+
+	nm_device_set_ip_ifindex (device, ifindex);
+}
+
+static void
 ppp_ip4_config (NMPPPManager *ppp_manager,
-                const char *iface,
                 NMIP4Config *config,
                 gpointer user_data)
 {
@@ -440,7 +450,6 @@ ppp_ip4_config (NMPPPManager *ppp_manager,
 
 	/* Ignore PPP IP4 events that come in after initial configuration */
 	if (nm_device_activate_ip4_state_in_conf (device)) {
-		nm_device_set_ip_iface (device, iface);
 		nm_device_activate_schedule_ip4_config_result (device, config);
 	}
 }
@@ -498,6 +507,9 @@ act_stage3_ip4_config_start (NMDevice *device,
 
 	g_signal_connect (priv->ppp_manager, NM_PPP_MANAGER_SIGNAL_STATE_CHANGED,
 	                  G_CALLBACK (ppp_state_changed),
+	                  self);
+	g_signal_connect (priv->ppp_manager, NM_PPP_MANAGER_SIGNAL_IFINDEX_SET,
+	                  G_CALLBACK (ppp_ifindex_set),
 	                  self);
 	g_signal_connect (priv->ppp_manager, NM_PPP_MANAGER_SIGNAL_IP4_CONFIG,
 	                  G_CALLBACK (ppp_ip4_config),
