@@ -450,27 +450,22 @@ ppp_state_changed (NMPPPManager *ppp_manager, NMPPPStatus status, gpointer user_
 }
 
 static void
-set_data_port (NMModem *self, const char *new_data_port)
-{
-	NMModemPrivate *priv = NM_MODEM_GET_PRIVATE (self);
-
-	if (g_strcmp0 (priv->data_port, new_data_port) != 0) {
-		g_free (priv->data_port);
-		priv->data_port = g_strdup (new_data_port);
-		_notify (self, PROP_DATA_PORT);
-	}
-}
-
-static void
 ppp_ifindex_set (NMPPPManager *ppp_manager,
                  int ifindex,
                  const char *iface,
                  gpointer user_data)
 {
 	NMModem *self = NM_MODEM (user_data);
+	NMModemPrivate *priv = NM_MODEM_GET_PRIVATE (self);
 
-	/* Notify about the new data port to use */
-	set_data_port (self, iface);
+	/* Notify about the new data port to use.
+	 *
+	 * @iface might be %NULL. */
+	if (g_strcmp0 (priv->data_port, iface) != 0) {
+		g_free (priv->data_port);
+		priv->data_port = g_strdup (iface);
+		_notify (self, PROP_DATA_PORT);
+	}
 }
 
 static void

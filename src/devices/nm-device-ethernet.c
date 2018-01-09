@@ -960,7 +960,11 @@ ppp_ifindex_set (NMPPPManager *ppp_manager,
 {
 	NMDevice *device = NM_DEVICE (user_data);
 
-	nm_device_set_ip_ifindex (device, ifindex);
+	if (!nm_device_set_ip_ifindex (device, ifindex)) {
+		nm_device_state_changed (device,
+		                         NM_DEVICE_STATE_FAILED,
+		                         NM_DEVICE_STATE_REASON_IP_CONFIG_UNAVAILABLE);
+	}
 }
 
 static void

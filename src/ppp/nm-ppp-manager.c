@@ -176,24 +176,28 @@ monitor_cb (gpointer user_data)
 {
 	NMPPPManager *manager = NM_PPP_MANAGER (user_data);
 	NMPPPManagerPrivate *priv = NM_PPP_MANAGER_GET_PRIVATE (manager);
-	struct ifreq req;
-	struct ppp_stats stats;
+	const char *ifname;
 
-	memset (&req, 0, sizeof (req));
-	memset (&stats, 0, sizeof (stats));
-	req.ifr_data = (caddr_t) &stats;
+	ifname = nm_platform_link_get_name (NM_PLATFORM_GET, priv->ifindex);
 
-	strncpy (req.ifr_name, priv->ip_iface, sizeof (req.ifr_name));
-	if (ioctl (priv->monitor_fd, SIOCGPPPSTATS, &req) < 0) {
-		if (errno != ENODEV)
-			_LOGW ("could not read ppp stats: %s", strerror (errno));
-	} else {
-		g_signal_emit (manager, signals[STATS], 0,
-		               (guint) stats.p.ppp_ibytes,
-		               (guint) stats.p.ppp_obytes);
+	if (ifname) {
+		struct ppp_stats stats = { };
+		struct ifreq req = {
+			.ifr_data = (caddr_t) &stats,
+		};
+
+		nm_utils_ifname_cpy (req.ifr_name, ifname);
+		if (ioctl (priv->monitor_fd, SIOCGPPPSTATS, &req) < 0) {
+			if (errno != ENODEV)
+				_LOGW ("could not read ppp stats: %s", strerror (errno));
+		} else {
+			g_signal_emit (manager, signals[STATS], 0,
+			               (guint) stats.p.ppp_ibytes,
+			               (guint) stats.p.ppp_obytes);
+		}
 	}
 
-	return TRUE;
+	return G_SOURCE_CONTINUE;
 }
 
 static void
@@ -407,29 +411,34 @@ impl_ppp_manager_set_ifindex (NMPPPManager *manager,
                               gint32 ifindex)
 {
 	NMPPPManagerPrivate *priv = NM_PPP_MANAGER_GET_PRIVATE (manager);
-	const NMPlatformLink *plink;
+	const NMPlatformLink *plink = NULL;
+	nm_auto_nmpobj const NMPObject *obj_keep_alive = NULL;
 
 	_LOGD ("set-ifindex %d", (int) ifindex);
 
-	if (priv->ifindex > 0) {
+	if (priv->ifindex >= 0) {
 		_LOGW ("can't change the ifindex from %d to %d", priv->ifindex, (int) ifindex);
 		return;
 	}
 
-	plink = nm_platform_link_get (NM_PLATFORM_GET, ifindex);
-	if (!plink) {
-		nm_platform_process_events (NM_PLATFORM_GET);
+	if (ifindex > 0) {
 		plink = nm_platform_link_get (NM_PLATFORM_GET, ifindex);
 		if (!plink) {
-			_LOGW ("unknown interface with ifindex %d", ifindex);
-			return;
+			nm_platform_process_events (NM_PLATFORM_GET);
+			plink = nm_platform_link_get (NM_PLATFORM_GET, ifindex);
 		}
 	}
 
-	priv->ifindex = ifindex;
-	priv->ip_iface = g_strdup (plink->name);
+	if (!plink) {
+		_LOGW ("unknown interface with ifindex %d", ifindex);
+		ifindex = 0;
+	}
 
-	g_signal_emit (manager, signals[IFINDEX_SET], 0, ifindex, priv->ip_iface);
+	priv->ifindex = ifindex;
+
+	obj_keep_alive = nmp_object_ref (NMP_OBJECT_UP_CAST (plink));
+
+	g_signal_emit (manager, signals[IFINDEX_SET], 0, ifindex, plink->name);
 	g_dbus_method_invocation_return_value (context, NULL);
 }
 
@@ -442,7 +451,7 @@ set_ip_config_common (NMPPPManager *self,
 	NMConnection *applied_connection;
 	NMSettingPpp *s_ppp;
 
-	if (!priv->ip_iface || priv->ifindex <= 0)
+	if (priv->ifindex <= 0)
 		return FALSE;
 
 	/* Got successful IP config; obviously the secrets worked */
@@ -1262,6 +1271,7 @@ nm_ppp_manager_init (NMPPPManager *manager)
 {
 	NMPPPManagerPrivate *priv = NM_PPP_MANAGER_GET_PRIVATE (manager);
 
+	priv->ifindex = -1;
 	priv->monitor_fd = -1;
 	priv->ip4_route_table = RT_TABLE_MAIN;
 	priv->ip4_route_metric = 460;
@@ -1302,7 +1312,6 @@ finalize (GObject *object)
 {
 	NMPPPManagerPrivate *priv = NM_PPP_MANAGER_GET_PRIVATE ((NMPPPManager *) object);
 
-	g_free (priv->ip_iface);
 	g_free (priv->parent_iface);
 
 	G_OBJECT_CLASS (nm_ppp_manager_parent_class)->finalize (object);
