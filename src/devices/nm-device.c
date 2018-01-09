@@ -1305,10 +1305,11 @@ nm_device_set_ip_ifindex (NMDevice *self, int ifindex)
 			return FALSE;
 		}
 		name = plink->name;
-	}
+	} else
+		g_return_val_if_fail (ifindex == 0, FALSE);
 
 	if (priv->ip_ifindex == ifindex)
-		return FALSE;
+		return TRUE;
 
 	_LOGD (LOGD_DEVICE, "ip-ifindex: update ifindex to %d", ifindex);
 	priv->ip_ifindex = ifindex;
