@@ -1091,14 +1091,26 @@ apply_parent_device_config (NMVpnConnection *self)
 		if (priv->ip4_config) {
 			vpn4_parent_config = nm_ip4_config_new (nm_netns_get_multi_idx (priv->netns),
 			                                        ifindex);
-			if (priv->ip_ifindex <= 0)
-				nm_ip4_config_merge (vpn4_parent_config, priv->ip4_config, NM_IP_CONFIG_MERGE_NO_DNS, 0);
+			if (priv->ip_ifindex <= 0) {
+				nm_ip4_config_merge (vpn4_parent_config,
+				                     priv->ip4_config,
+				                     NM_IP_CONFIG_MERGE_NO_DNS,
+				                     RT_TABLE_MAIN,
+				                     NULL, NULL,
+				                     0);
+			}
 		}
 		if (priv->ip6_config) {
 			vpn6_parent_config = nm_ip6_config_new (nm_netns_get_multi_idx (priv->netns),
 			                                        ifindex);
-			if (priv->ip_ifindex <= 0)
-				nm_ip6_config_merge (vpn6_parent_config, priv->ip6_config, NM_IP_CONFIG_MERGE_NO_DNS, 0);
+			if (priv->ip_ifindex <= 0) {
+				nm_ip6_config_merge (vpn6_parent_config,
+				                     priv->ip6_config,
+				                     NM_IP_CONFIG_MERGE_NO_DNS,
+				                     RT_TABLE_MAIN,
+				                     NULL, NULL,
+				                     0);
+			}
 		}
 	}
 

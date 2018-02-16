@@ -123,10 +123,14 @@ void nm_ip6_config_merge_setting (NMIP6Config *self,
                                   guint32 route_metric);
 NMSetting *nm_ip6_config_create_setting (const NMIP6Config *self);
 
+typedef guint32 (*NMGetRoute6MetricFunc) (gpointer);
 
 void nm_ip6_config_merge (NMIP6Config *dst,
                           const NMIP6Config *src,
                           NMIPConfigMergeFlags merge_flags,
+                          guint32 fallback_route_table,
+                          NMGetRoute6MetricFunc get_route_metric,
+                          gpointer get_route_metric_arg,
                           guint32 default_route_metric_penalty);
 void nm_ip6_config_subtract (NMIP6Config *dst,
                              const NMIP6Config *src,

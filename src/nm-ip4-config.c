@@ -1142,6 +1142,9 @@ void
 nm_ip4_config_merge (NMIP4Config *dst,
                      const NMIP4Config *src,
                      NMIPConfigMergeFlags merge_flags,
+                     guint32 fallback_route_table,
+                     NMGetRoute4MetricFunc get_route_metric,
+                     gpointer get_route_metric_arg,
                      guint32 default_route_metric_penalty)
 {
 	NMIP4ConfigPrivate *dst_priv;
@@ -1173,18 +1176,24 @@ nm_ip4_config_merge (NMIP4Config *dst,
 		const NMPlatformIP4Route *r_src;
 
 		nm_ip_config_iter_ip4_route_for_each (&ipconf_iter, src, &r_src) {
-			if (NM_PLATFORM_IP_ROUTE_IS_DEFAULT (r_src)) {
+			NMPlatformIP4Route r = *r_src;
+
+			if (r.metric_unset) {
+				r.metric = get_route_metric ? get_route_metric (get_route_metric_arg) : 0;
+				r.metric_unset = FALSE;
+			}
+			if (r.table_unset) {
+				r.table_coerced = nm_platform_route_table_coerce (fallback_route_table);
+				r.table_unset = FALSE;
+			}
+
+			if (NM_PLATFORM_IP_ROUTE_IS_DEFAULT (&r)) {
 				if (NM_FLAGS_HAS (merge_flags, NM_IP_CONFIG_MERGE_NO_DEFAULT_ROUTES))
 					continue;
-				if (default_route_metric_penalty) {
-					NMPlatformIP4Route r = *r_src;
-
+				if (default_route_metric_penalty)
 					r.metric = nm_utils_ip_route_metric_penalize (AF_INET, r.metric, default_route_metric_penalty);
-					_add_route (dst, NULL, &r, NULL);
-					continue;
-				}
 			}
-			_add_route (dst, ipconf_iter.current->obj, NULL, NULL);
+			_add_route (dst, NULL, &r, NULL);
 		}
 	}
 
