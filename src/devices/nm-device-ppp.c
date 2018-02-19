@@ -155,14 +155,6 @@ act_stage2_config (NMDevice *device, NMDeviceStateReason *out_failure_reason)
 
 	priv->ppp_manager = nm_ppp_manager_create (nm_setting_pppoe_get_parent (s_pppoe), &error);
 
-	if (priv->ppp_manager) {
-		nm_ppp_manager_set_route_parameters (priv->ppp_manager,
-		                                     nm_device_get_route_table (device, AF_INET, TRUE),
-		                                     nm_device_get_route_metric (device, AF_INET),
-		                                     nm_device_get_route_table (device, AF_INET6, TRUE),
-		                                     nm_device_get_route_metric (device, AF_INET6));
-	}
-
 	if (   !priv->ppp_manager
 	    || !nm_ppp_manager_start (priv->ppp_manager, req,
 	                              nm_setting_pppoe_get_username (s_pppoe),

@@ -998,14 +998,6 @@ pppoe_stage3_ip4_config_start (NMDeviceEthernet *self, NMDeviceStateReason *out_
 	priv->ppp_manager = nm_ppp_manager_create (nm_device_get_iface (device),
 	                                           &err);
 
-	if (priv->ppp_manager) {
-		nm_ppp_manager_set_route_parameters (priv->ppp_manager,
-		                                     nm_device_get_route_table (device, AF_INET, TRUE),
-		                                     nm_device_get_route_metric (device, AF_INET),
-		                                     nm_device_get_route_table (device, AF_INET6, TRUE),
-		                                     nm_device_get_route_metric (device, AF_INET6));
-	}
-
 	if (   !priv->ppp_manager
 	    || !nm_ppp_manager_start (priv->ppp_manager, req,
 	                              nm_setting_pppoe_get_username (s_pppoe),

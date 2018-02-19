@@ -834,7 +834,6 @@ context_property_changed (GDBusProxy *proxy,
 	const gchar *s;
 	const gchar **array, **iter;
 	guint32 address_network, gateway_network;
-	guint32 ip4_route_table, ip4_route_metric;
 	int ifindex;
 
 	_LOGD ("PropertyChanged: %s", property);
@@ -921,17 +920,13 @@ context_property_changed (GDBusProxy *proxy,
 		_LOGW ("invalid 'Gateway': %s", s);
 		goto out;
 	}
-	nm_modem_get_route_parameters (NM_MODEM (self),
-	                               &ip4_route_table,
-	                               &ip4_route_metric,
-	                               NULL,
-	                               NULL);
+
 	{
 		const NMPlatformIP4Route r = {
 			.rt_source = NM_IP_CONFIG_SOURCE_WWAN,
 			.gateway = gateway_network,
-			.table_coerced = nm_platform_route_table_coerce (ip4_route_table),
-			.metric = ip4_route_metric,
+			.table_unset = TRUE,
+			.metric_unset = TRUE,
 		};
 
 		_LOGI ("Gateway: %s", s);
@@ -965,19 +960,13 @@ context_property_changed (GDBusProxy *proxy,
 		_LOGI ("MessageProxy: %s", s);
 		if (   s
 		    && nm_utils_parse_inaddr_bin (AF_INET, s, &address_network)) {
-			nm_modem_get_route_parameters (NM_MODEM (self),
-			                               &ip4_route_table,
-			                               &ip4_route_metric,
-			                               NULL,
-			                               NULL);
-
 			{
 				const NMPlatformIP4Route mms_route = {
 					.network = address_network,
 					.plen = 32,
 					.gateway = gateway_network,
-					.table_coerced = nm_platform_route_table_coerce (ip4_route_table),
-					.metric = ip4_route_metric,
+					.table_unset = TRUE,
+					.metric_unset = TRUE,
 				};
 
 				nm_ip4_config_add_route (priv->ip4_config, &mms_route, NULL);

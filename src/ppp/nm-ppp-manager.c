@@ -108,11 +108,6 @@ typedef struct {
 	/* Monitoring */
 	int monitor_fd;
 	guint monitor_id;
-
-	guint32 ip4_route_table;
-	guint32 ip4_route_metric;
-	guint32 ip6_route_table;
-	guint32 ip6_route_metric;
 } NMPPPManagerPrivate;
 
 struct _NMPPPManager {
@@ -137,37 +132,6 @@ G_DEFINE_TYPE (NMPPPManager, nm_ppp_manager, NM_TYPE_EXPORTED_OBJECT)
 
 static void _ppp_cleanup  (NMPPPManager *manager);
 static void _ppp_kill (NMPPPManager *manager);
-
-/*****************************************************************************/
-
-static void
-_ppp_manager_set_route_paramters (NMPPPManager *self,
-                                  guint32 ip4_route_table,
-                                  guint32 ip4_route_metric,
-                                  guint32 ip6_route_table,
-                                  guint32 ip6_route_metric)
-{
-	NMPPPManagerPrivate *priv;
-
-	g_return_if_fail (NM_IS_PPP_MANAGER (self));
-
-	priv = NM_PPP_MANAGER_GET_PRIVATE (self);
-	if (   priv->ip4_route_table  != ip4_route_table
-	    || priv->ip4_route_metric != ip4_route_metric
-	    || priv->ip6_route_table  != ip6_route_table
-	    || priv->ip6_route_metric != ip6_route_metric) {
-		priv->ip4_route_table = ip4_route_table;
-		priv->ip4_route_metric = ip4_route_metric;
-		priv->ip6_route_table = ip6_route_table;
-		priv->ip6_route_metric = ip6_route_metric;
-
-		_LOGT ("route-parameters: table-v4: %u, metric-v4: %u, table-v6: %u, metric-v6: %u",
-		       priv->ip4_route_table,
-		       priv->ip4_route_metric,
-		       priv->ip6_route_table,
-		       priv->ip6_route_metric);
-	}
-}
 
 /*****************************************************************************/
 
@@ -502,8 +466,8 @@ impl_ppp_manager_set_ip4_config (NMPPPManager *manager,
 			.ifindex   = priv->ifindex,
 			.rt_source = NM_IP_CONFIG_SOURCE_PPP,
 			.gateway   = u32,
-			.table_coerced = nm_platform_route_table_coerce (priv->ip4_route_table),
-			.metric    = priv->ip4_route_metric,
+			.table_unset = TRUE,
+			.metric_unset = TRUE,
 		};
 
 		nm_ip4_config_add_route (config, &r, NULL);
@@ -599,8 +563,8 @@ impl_ppp_manager_set_ip6_config (NMPPPManager *manager,
 			.ifindex   = priv->ifindex,
 			.rt_source = NM_IP_CONFIG_SOURCE_PPP,
 			.gateway   = a,
-			.table_coerced = nm_platform_route_table_coerce (priv->ip6_route_table),
-			.metric    = priv->ip6_route_metric,
+			.table_unset = TRUE,
+			.metric_unset = TRUE,
 		};
 
 		nm_ip6_config_add_route (config, &r, NULL);
@@ -1273,10 +1237,6 @@ nm_ppp_manager_init (NMPPPManager *manager)
 
 	priv->ifindex = -1;
 	priv->monitor_fd = -1;
-	priv->ip4_route_table = RT_TABLE_MAIN;
-	priv->ip4_route_metric = 460;
-	priv->ip6_route_table = RT_TABLE_MAIN;
-	priv->ip6_route_metric = 460;
 }
 
 static NMPPPManager *
@@ -1398,7 +1358,6 @@ nm_ppp_manager_class_init (NMPPPManagerClass *manager_class)
 
 NMPPPOps ppp_ops = {
 	.create               = _ppp_manager_new,
-	.set_route_parameters = _ppp_manager_set_route_paramters,
 	.start                = _ppp_manager_start,
 	.stop_async           = _ppp_manager_stop_async,
 	.stop_finish          = _ppp_manager_stop_finish,
