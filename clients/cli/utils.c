@@ -202,7 +202,6 @@ next_arg (NmCli *nmc, int *argc, char ***argv, ...)
 		if (*argc == 0)
 			return -1;
 
-
 		va_start (args, argv);
 
 		if (nmc && nmc->complete && *argc == 1) {
@@ -218,10 +217,18 @@ next_arg (NmCli *nmc, int *argc, char ***argv, ...)
 
 		/* Check command dependent options first */
 		while ((cmd_option = va_arg (args, const char *))) {
-			/* strip heading "--" form cmd_option */
-			if (nmc_arg_is_option (**argv, cmd_option + 2)) {
-				va_end (args);
-				return cmd_option_pos;
+			if (cmd_option[0] == '-' && cmd_option[1] == '-') {
+				/* Match as an option (leading "--" stripped) */
+				if (nmc_arg_is_option (**argv, cmd_option + 2)) {
+					va_end (args);
+					return cmd_option_pos;
+				}
+			} else {
+				/* Match literally. */
+				if (strcmp (**argv, cmd_option) == 0) {
+					va_end (args);
+					return cmd_option_pos;
+				}
 			}
 			cmd_option_pos++;
 		}
