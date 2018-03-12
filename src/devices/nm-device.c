@@ -6212,15 +6212,13 @@ dhcp4_fail (NMDevice *self, gboolean timeout)
 
 	_LOGD (LOGD_DHCP4, "DHCPv4 failed%s", timeout ? " (timeout)" : "");
 
-#if 0	/* FIXME: is this really needed? */
 	/* Keep client running if there are static addresses configured
 	 * on the interface
 	 */
 	if (   priv->ip4_state == IP_DONE
 	    && priv->con_ip4_config
 	    && nm_ip4_config_get_num_addresses (priv->con_ip4_config) > 0)
-		return;
-#endif
+		goto clear_config;
 
 	/* Fail the method in case of timeout or failure during initial
 	 * configuration.
@@ -6243,13 +6241,16 @@ dhcp4_fail (NMDevice *self, gboolean timeout)
 		_LOGI (LOGD_DHCP4,
 		       "DHCPv4: %u seconds grace period started",
 		       DHCP_GRACE_PERIOD_SEC);
+		goto clear_config;
+	}
+	return;
 
-		/* The previous configuration is no longer valid */
-		if (priv->dhcp4.config) {
-			nm_exported_object_clear_and_unexport (&priv->dhcp4.config);
-			priv->dhcp4.config = nm_dhcp4_config_new ();
-			_notify (self, PROP_DHCP4_CONFIG);
-		}
+clear_config:
+	/* The previous configuration is no longer valid */
+	if (priv->dhcp4.config) {
+		nm_exported_object_clear_and_unexport (&priv->dhcp4.config);
+		priv->dhcp4.config = nm_dhcp4_config_new ();
+		_notify (self, PROP_DHCP4_CONFIG);
 	}
 }
 
@@ -7023,15 +7024,13 @@ dhcp6_fail (NMDevice *self, gboolean timeout)
 	is_dhcp_managed = (priv->dhcp6.mode == NM_NDISC_DHCP_LEVEL_MANAGED);
 
 	if (is_dhcp_managed) {
-#if 0	/* FIXME: is this really needed? */
 		/* Keep client running if there are static addresses configured
 		 * on the interface
 		 */
 		if (   priv->ip6_state == IP_DONE
 		    && priv->con_ip6_config
 		    && nm_ip6_config_get_num_addresses (priv->con_ip6_config))
-			return;
-#endif
+			goto clear_config;
 
 		/* Fail the method in case of timeout or failure during initial
 		 * configuration.
@@ -7054,13 +7053,17 @@ dhcp6_fail (NMDevice *self, gboolean timeout)
 			_LOGI (LOGD_DHCP6,
 			       "DHCPv6: %u seconds grace period started",
 			       DHCP_GRACE_PERIOD_SEC);
+			goto clear_config;
 		}
 	} else {
 		/* not a hard failure; just live with the RA info */
+		dhcp6_cleanup (self, CLEANUP_TYPE_DECONFIGURE, FALSE);
 		if (priv->ip6_state == IP_CONF)
 			nm_device_activate_schedule_ip6_config_result (self);
 	}
+	return;
 
+clear_config:
 	/* The previous configuration is no longer valid */
 	if (priv->dhcp6.config) {
 		nm_exported_object_clear_and_unexport (&priv->dhcp6.config);
