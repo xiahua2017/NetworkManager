@@ -33,16 +33,6 @@
 
 /*****************************************************************************/
 
-static char *secret_flags_to_string (guint32 flags, NMMetaAccessorGetType get_type);
-
-#define ALL_SECRET_FLAGS \
-	(NM_SETTING_SECRET_FLAG_NONE | \
-	 NM_SETTING_SECRET_FLAG_AGENT_OWNED | \
-	 NM_SETTING_SECRET_FLAG_NOT_SAVED | \
-	 NM_SETTING_SECRET_FLAG_NOT_REQUIRED)
-
-/*****************************************************************************/
-
 static GType
 _gobject_property_get_gtype (GObject *gobject, const char *property_name)
 {
@@ -806,21 +796,6 @@ _get_fcn_gobject_mtu (ARGS_GET_FCN)
 }
 
 static gconstpointer
-_get_fcn_gobject_secret_flags (ARGS_GET_FCN)
-{
-	guint v;
-	GValue val = G_VALUE_INIT;
-
-	RETURN_UNSUPPORTED_GET_TYPE ();
-
-	g_value_init (&val, G_TYPE_UINT);
-	g_object_get_property (G_OBJECT (setting), property_info->property_name, &val);
-	v = g_value_get_uint (&val);
-	g_value_unset (&val);
-	RETURN_STR_TO_FREE (secret_flags_to_string (v, get_type));
-}
-
-static gconstpointer
 _get_fcn_gobject_enum (ARGS_GET_FCN)
 {
 	GType gtype = 0;
@@ -1211,42 +1186,6 @@ _set_fcn_gobject_mac (ARGS_SET_FCN)
 }
 
 static gboolean
-_set_fcn_gobject_secret_flags (ARGS_SET_FCN)
-{
-	gs_free char *err_token = NULL;
-	gs_free char *str_all = NULL;
-	int flags;
-
-	nm_assert (!error || !*error);
-
-	if (!nm_utils_enum_from_str (nm_setting_secret_flags_get_type (),
-	                             value,
-	                             &flags,
-	                             &err_token)) {
-		str_all = nm_utils_enum_to_str (nm_setting_secret_flags_get_type (),
-		                                ALL_SECRET_FLAGS);
-		g_set_error (error, 1, 0,
-		             _("'%s' is not a valid flag; use <0-%d> or a combination of '%s'"),
-		             err_token,
-		             ALL_SECRET_FLAGS,
-		             str_all);
-		return FALSE;
-	}
-
-	/* Validate the flags number */
-	if (flags > ALL_SECRET_FLAGS) {
-		flags = ALL_SECRET_FLAGS;
-		_env_warn_fcn (environment, environment_user_data,
-		               NM_META_ENV_WARN_LEVEL_WARN,
-		               N_("'%s' sum is higher than all flags => all flags set"),
-		               value);
-	}
-
-	g_object_set (setting, property_info->property_name, (guint) flags, NULL);
-	return TRUE;
-}
-
-static gboolean
 _set_fcn_gobject_enum (ARGS_SET_FCN)
 {
 	GType gtype = 0;
@@ -1548,37 +1487,6 @@ vlan_priorities_to_string (NMSettingVlan *s_vlan, NMVlanPriorityMap map)
 		g_string_truncate (priorities, priorities->len-1);  /* chop off trailing ',' */
 
 	return g_string_free (priorities, FALSE);
-}
-
-static char *
-secret_flags_to_string (guint32 flags, NMMetaAccessorGetType get_type)
-{
-	GString *flag_str;
-
-	if (get_type != NM_META_ACCESSOR_GET_TYPE_PRETTY)
-		return g_strdup_printf ("%u", flags);
-
-	if (flags == 0)
-		return g_strdup (_("0 (none)"));
-
-	flag_str = g_string_new (NULL);
-	g_string_printf (flag_str, "%u (", flags);
-
-	if (flags & NM_SETTING_SECRET_FLAG_AGENT_OWNED)
-		g_string_append (flag_str, _("agent-owned, "));
-	if (flags & NM_SETTING_SECRET_FLAG_NOT_SAVED)
-		g_string_append (flag_str, _("not saved, "));
-	if (flags & NM_SETTING_SECRET_FLAG_NOT_REQUIRED)
-		g_string_append (flag_str, _("not required, "));
-
-	if (flag_str->str[flag_str->len-1] == '(')
-		g_string_append (flag_str, _("unknown"));
-	else
-		g_string_truncate (flag_str, flag_str->len-2);  /* chop off trailing ', ' */
-
-	g_string_append_c (flag_str, ')');
-
-	return g_string_free (flag_str, FALSE);
 }
 
 static void
@@ -4733,6 +4641,22 @@ _validate_fcn_wireless_security_psk (const char *value, char **out_to_free, GErr
 	return value;
 }
 
+static const struct _NMUtilsEnumValueInfo secret_flags_value_infos_get[] = {
+		{
+			.value = NM_SETTING_SECRET_FLAG_AGENT_OWNED,
+			.nick = "agent-owned",
+		},
+		{
+			.value = NM_SETTING_SECRET_FLAG_NOT_REQUIRED,
+			.nick = "not required",
+		},
+		{
+			.value = NM_SETTING_SECRET_FLAG_NOT_SAVED,
+			.nick = "not saved",
+		},
+		{ },
+};
+
 /*****************************************************************************/
 
 static const NMMetaPropertyInfo property_info_BOND_OPTIONS;
@@ -4873,12 +4797,6 @@ static const NMMetaPropertyType _pt_gobject_mac = {
 	.set_fcn =                      _set_fcn_gobject_mac,
 };
 
-static const NMMetaPropertyType _pt_gobject_secret_flags = {
-	.get_fcn =                      _get_fcn_gobject_secret_flags,
-	.set_fcn =                      _set_fcn_gobject_secret_flags,
-	.values_fcn =                   _values_fcn_gobject_enum,
-};
-
 static const NMMetaPropertyType _pt_gobject_enum = {
 	.get_fcn =                      _get_fcn_gobject_enum,
 	.set_fcn =                      _set_fcn_gobject_enum,
@@ -5001,7 +4919,14 @@ static const NMMetaPropertyInfo *const property_infos_802_1X[] = {
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_CA_CERT_PASSWORD_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_CA_PATH,
 		.property_type =                &_pt_gobject_string,
@@ -5035,7 +4960,14 @@ static const NMMetaPropertyInfo *const property_infos_802_1X[] = {
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_CLIENT_CERT_PASSWORD_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_PHASE1_PEAPVER,
 		.property_type =                &_pt_gobject_string,
@@ -5093,7 +5025,14 @@ static const NMMetaPropertyInfo *const property_infos_802_1X[] = {
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_PHASE2_CA_CERT_PASSWORD_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_PHASE2_CA_PATH,
 		.property_type =                &_pt_gobject_string,
@@ -5128,14 +5067,28 @@ static const NMMetaPropertyInfo *const property_infos_802_1X[] = {
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_PHASE2_CLIENT_CERT_PASSWORD_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_PASSWORD,
 		.is_secret =                    TRUE,
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_PASSWORD_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_PASSWORD_RAW,
 		.is_secret =                    TRUE,
@@ -5153,7 +5106,14 @@ static const NMMetaPropertyInfo *const property_infos_802_1X[] = {
 		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_PASSWORD_RAW_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_PRIVATE_KEY,
 		.describe_message =
@@ -5171,7 +5131,14 @@ static const NMMetaPropertyInfo *const property_infos_802_1X[] = {
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_PRIVATE_KEY_PASSWORD_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_PHASE2_PRIVATE_KEY,
 		.describe_message =
@@ -5189,14 +5156,28 @@ static const NMMetaPropertyInfo *const property_infos_802_1X[] = {
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_PHASE2_PRIVATE_KEY_PASSWORD_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_PIN,
 		.is_secret =                    TRUE,
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_PIN_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_802_1X_SYSTEM_CA_CERTS,
 		.property_type =                &_pt_gobject_bool,
@@ -5225,7 +5206,14 @@ static const NMMetaPropertyInfo *const property_infos_ADSL[] = {
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_ADSL_PASSWORD_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_ADSL_PROTOCOL,
 		.is_cli_option =                TRUE,
@@ -5409,7 +5397,14 @@ static const NMMetaPropertyInfo *const property_infos_CDMA[] = {
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_CDMA_PASSWORD_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_CDMA_MTU,
 		.property_type =                &_pt_gobject_mtu,
@@ -5700,7 +5695,14 @@ static const NMMetaPropertyInfo *const property_infos_GSM[] = {
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_GSM_PASSWORD_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_GSM_APN,
 		.is_cli_option =                TRUE,
@@ -5717,7 +5719,15 @@ static const NMMetaPropertyInfo *const property_infos_GSM[] = {
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_GSM_PIN_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
+
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_GSM_HOME_ONLY,
 		.property_type =                &_pt_gobject_bool,
@@ -6227,7 +6237,14 @@ static const NMMetaPropertyInfo *const property_infos_MACSEC[] = {
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_MACSEC_MKA_CAK_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_MACSEC_MKA_CKN,
 		.is_cli_option =                TRUE,
@@ -6349,7 +6366,14 @@ static const NMMetaPropertyInfo *const property_infos_PPPOE[] = {
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_PPPOE_PASSWORD_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	NULL
 };
@@ -7373,7 +7397,14 @@ static const NMMetaPropertyInfo *const property_infos_WIRELESS_SECURITY[] = {
 		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_WIRELESS_SECURITY_WEP_KEY_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_WIRELESS_SECURITY_WEP_KEY_TYPE,
 		.describe_message =
@@ -7396,14 +7427,28 @@ static const NMMetaPropertyInfo *const property_infos_WIRELESS_SECURITY[] = {
 		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_WIRELESS_SECURITY_PSK_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_WIRELESS_SECURITY_LEAP_PASSWORD,
 		.is_secret =                    TRUE,
 		.property_type =                &_pt_gobject_string,
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_WIRELESS_SECURITY_LEAP_PASSWORD_FLAGS,
-		.property_type =                &_pt_gobject_secret_flags,
+		.property_type =                &_pt_gobject_enum,
+		.property_typ_data = DEFINE_PROPERTY_TYP_DATA (
+			PROPERTY_TYP_DATA_SUBTYPE (gobject_enum,
+				.value_infos_get =      secret_flags_value_infos_get
+			),
+			.typ_flags =                  NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_NUMERIC
+			                            | NM_META_PROPERTY_TYP_FLAG_ENUM_GET_PRETTY_TEXT,
+		),
 	),
 	PROPERTY_INFO_WITH_DESC (NM_SETTING_WIRELESS_SECURITY_WPS_METHOD,
 		.property_type =                &_pt_gobject_enum,
