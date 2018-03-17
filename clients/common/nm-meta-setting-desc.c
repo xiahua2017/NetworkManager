@@ -827,6 +827,7 @@ _get_fcn_gobject_enum (ARGS_GET_FCN)
 	GType gtype_prop;
 	nm_auto_unref_gtypeclass GTypeClass *gtype_class = NULL;
 	nm_auto_unref_gtypeclass GTypeClass *gtype_prop_class = NULL;
+	const struct _NMUtilsEnumValueInfo *value_infos;
 	gboolean has_gtype = FALSE;
 	nm_auto_unset_gvalue GValue gval = G_VALUE_INIT;
 	gint64 v;
@@ -928,10 +929,47 @@ _get_fcn_gobject_enum (ARGS_GET_FCN)
 		RETURN_STR_TO_FREE (g_steal_pointer (&s));
 	}
 
+	if (   property_info->property_typ_data
+	    && (value_infos = property_info->property_typ_data->subtype.gobject_enum.value_infos_get)) {
+
+		if (!gtype_class)
+			gtype_class = g_type_class_ref (gtype);
+
+		if (G_IS_ENUM_CLASS (gtype_class)) {
+			for ( ; value_infos->nick; value_infos++) {
+				if (value_infos->value == v)
+					s = g_strdup (value_infos->nick);
+			}
+			if (!s)
+				s = nm_utils_enum_to_str (gtype, (int) v);
+		} else {
+			/* flags class */
+			GString *str = g_string_new ("");
+			gint64 flags = v;
+
+			for ( ; value_infos->nick; value_infos++) {
+				nm_assert (nm_utils_is_power_of_two (value_infos->value));
+				if (flags & value_infos->value) {
+					flags &= ~value_infos->value;
+					g_string_append (str, value_infos->nick);
+					if (flags)
+						g_string_append (str, ", ");
+				}
+			}
+			if (flags || !str->len) {
+				s = nm_utils_enum_to_str (gtype, (int) flags);
+				g_string_append (str, s);
+				g_free (s);
+			}
+			s = g_string_free (str, FALSE);
+		}
+	} else {
+		/* No value infos */
+		s = nm_utils_enum_to_str (gtype, (int) v);
+	}
+
 	/* the gobject_enum.value_infos are currently ignored for the getter. They
 	 * only declare additional aliases for the setter. */
-
-	s = nm_utils_enum_to_str (gtype, (int) v);
 
 	if (!format_numeric)
 		RETURN_STR_TO_FREE (g_steal_pointer (&s));
