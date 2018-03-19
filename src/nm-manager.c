@@ -1193,6 +1193,14 @@ manager_device_state_changed (NMDevice *device,
 	NMManager *self = NM_MANAGER (user_data);
 	NMManagerPrivate *priv = NM_MANAGER_GET_PRIVATE (self);
 
+	if (   old_state == NM_DEVICE_STATE_UNMANAGED
+	    && new_state > NM_DEVICE_STATE_UNMANAGED) {
+		nm_log_err (LOGD_CORE,
+		            " ---- retry connections for parent device %s",
+		            nm_device_get_iface (device));
+		retry_connections_for_parent_device (self, device);
+	}
+
 	switch (new_state) {
 	case NM_DEVICE_STATE_UNMANAGED:
 	case NM_DEVICE_STATE_UNAVAILABLE:
